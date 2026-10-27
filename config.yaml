@@ -1,0 +1,126 @@
+# Configuración global del prototipo de Traductor de Lenguaje de Señas a Voz
+
+alphabet: "ASL"  # Opciones preconfiguradas: "ASL" (por defecto) o "LSM"
+
+alphabets:
+  ASL:
+    name: "American Sign Language (ASL)"
+    static:
+      - "A"
+      - "B"
+      - "C"
+      - "D"
+      - "E"
+      - "F"
+      - "G"
+      - "H"
+      - "I"
+      - "K"
+      - "L"
+      - "M"
+      - "N"
+      - "O"
+      - "P"
+      - "Q"
+      - "R"
+      - "S"
+      - "T"
+      - "U"
+      - "V"
+      - "W"
+      - "X"
+      - "Y"
+    dynamic:
+      - "J"  # Trazo en curva con el meñique
+      - "Z"  # Trazo en zigzag con el índice
+  LSM:
+    name: "Lengua de Señas Mexicana (LSM)"
+    static:
+      - "A"
+      - "B"
+      - "C"
+      - "D"
+      - "E"
+      - "F"
+      - "G"
+      - "H"
+      - "I"
+      - "L"
+      - "M"
+      - "N"
+      - "O"
+      - "P"
+      - "R"
+      - "S"
+      - "T"
+      - "U"
+      - "V"
+      - "W"
+      - "Y"
+    dynamic:
+      - "J"  # Movimiento circular del meñique
+      - "K"  # Movimiento vertical de muñeca/dedos
+      - "Ñ"  # Oscilación lateral de la N
+      - "Q"  # Movimiento de muñeca en gancho
+      - "X"  # Tracción hacia el cuerpo
+      - "Z"  # Trazo en Z con el índice
+
+camera:
+  device_index: 0
+  width: 640
+  height: 480
+  fps: 30
+  use_dshow_on_windows: true
+  mirror_display: true
+
+perception:
+  models_dir: "models/mediapipe"
+  max_num_hands: 2
+  min_hand_detection_confidence: 0.55
+  min_hand_presence_confidence: 0.55
+  min_tracking_confidence: 0.50
+  enable_face: true
+  enable_pose: true
+  face_blendshape_thresholds:
+    smile: 0.45
+    brow_up: 0.45
+    brow_down: 0.40
+    mouth_open: 0.45
+    blink: 0.50
+
+features:
+  canonical_hand: "Right"       # Espeja la mano izquierda al marco de referencia derecho
+  dynamic_window_frames: 25     # Ventana temporal (~20-30 frames) para señas dinámicas (Fase 2)
+  dynamic_min_motion: 0.08      # Desplazamiento mínimo normalizado para activar clasificador dinámico
+
+recognition:
+  samples_per_letter: 150
+  dynamic_sequences_per_letter: 20
+  dataset_csv: "data/landmarks_static.csv"
+  dynamic_dataset_csv: "data/landmarks_dynamic.csv"
+  model_path: "models/sign_classifier.joblib"
+  dynamic_model_path: "models/sign_dynamic_classifier.joblib"
+  classifier_type: "mlp"        # "mlp" (MLPClassifier) o "knn" (KNeighborsClassifier)
+
+text:
+  stability_frames: 12          # N frames consecutivos estables para aceptar una letra
+  confidence_threshold: 0.70    # Confianza mínima [0.0 - 1.0] para contabilizar el frame
+  release_frames: 4             # Frames sin mano o con cambio de letra para desbloquear repetición
+  control_gesture_hold_frames: 20  # Frames (~0.8-1.0 s) sosteniendo gesto facial de control
+  gestures:
+    space: "mouth_open"         # Gesto para insertar espacio ("mouth_open", "smile", "none")
+    backspace: "brow_down"      # Gesto para borrar última letra ("brow_down", "blink_both", "none")
+    speak: "brow_up"            # Gesto para confirmar y hablar ("brow_up", "fist_left", "none")
+
+gemini:
+  enabled: true
+  model: "gemini-2.5-flash"     # Sobrescribible con variable de entorno GEMINI_MODEL
+  timeout_seconds: 8.0
+
+speech:
+  language: "es"                # Idioma por defecto ("es" o "en")
+  voice_translate_dir: "./voice-translate"
+  output_wav: "output.wav"
+  tts_model_es: "tts_models/es/mai/tacotron2-DDC"
+  tts_model_en: "tts_models/en/ljspeech/tacotron2-DDC_ph"
+

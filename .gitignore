@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+output.wav
+models/*.joblib
+models/mediapipe/*.task
+data/*.csv
+
