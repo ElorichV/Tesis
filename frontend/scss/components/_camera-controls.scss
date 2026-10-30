@@ -1,0 +1,54 @@
+@use '../abstracts/tokens' as *;
+
+// ==========================================================================
+// Estado y controles de la cámara · .camera-controls / .checklist
+// Indicadores con ícono + texto (nunca solo color).
+// ==========================================================================
+
+.camera-controls {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-strong);
+}
+
+.camera-controls__header {
+  display: flex;
+  justify-content: space-between;
+  gap: $space-2;
+  font-family: $font-mono;
+  font-size: $text-sm;
+}
+
+.camera-controls__group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.checklist {
+  display: grid;
+  gap: 3px;
+  list-style: none;
+}
+
+.checklist__item {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--fg);
+}
+
+.checklist__item--idle {
+  color: var(--fg-2);
+}
+
+.checklist__item--warn {
+  font-weight: 700;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}

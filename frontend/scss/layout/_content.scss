@@ -1,0 +1,47 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// ==========================================================================
+// Páginas de contenido (Fuentes y alcance) · .content
+// ==========================================================================
+
+.content {
+  flex: 1 0 auto;
+  padding-top: 28px;
+  padding-bottom: 56px;
+}
+
+.content__head {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: $space-5;
+}
+
+.content__title {
+  font-weight: 700;
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.15;
+  letter-spacing: -.01em;
+}
+
+.content__lead {
+  max-width: 60ch;
+  font-size: $text-lg;
+  line-height: 1.55;
+  color: var(--fg-2);
+}
+
+.content__section-title {
+  margin: 36px 0 $space-3;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.content__intro {
+  margin-bottom: $space-3;
+}
+
+.content__note {
+  margin-top: $space-4;
+}

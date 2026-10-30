@@ -1,0 +1,44 @@
+@use '../abstracts/tokens' as *;
+
+// ==========================================================================
+// Texto para el alumno · .subtitle
+// Español sencillo por defecto; «Ver original» y «A+» con aria-pressed.
+// ==========================================================================
+
+.subtitle {
+  padding-top: 10px;
+  border-top: 1px solid var(--line-strong);
+}
+
+.subtitle__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-2;
+  margin-bottom: $space-1;
+}
+
+.subtitle__label {
+  font-family: $font-mono;
+  font-size: $text-xs;
+  color: var(--fg-2);
+}
+
+.subtitle__tools {
+  display: flex;
+  gap: 6px;
+}
+
+.subtitle__text {
+  min-height: 1.4em;
+  font-weight: 700;
+  font-size: $text-lg;
+  line-height: 1.4;
+  color: var(--fg);
+}
+
+.subtitle__text--large {
+  font-size: $text-xxl;
+  line-height: 1.35;
+}

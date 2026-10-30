@@ -1,0 +1,33 @@
+@use '../abstracts/tokens' as *;
+
+// ==========================================================================
+// Campo alterno del alumno · .writer
+// Para quien prefiere escribir en lugar de señar.
+// ==========================================================================
+
+.writer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.writer__input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1.5px solid $blanco-suave;
+  border-radius: $radius-md;
+  background: $blanco-suave;
+  color: $obsidiana;
+  font-size: $text-base;
+
+  &::placeholder {
+    color: $texto-2-claro;
+  }
+
+  &:focus-visible {
+    outline: 3px solid $neon;
+    outline-offset: 2px;
+  }
+}

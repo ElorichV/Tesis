@@ -1,0 +1,11 @@
+# Dependencias y sistema
+node_modules/
+.DS_Store
+Thumbs.db
+
+# Mapas de Sass (se regeneran)
+css/*.map
+
+# Editores
+.vscode/
+.idea/

@@ -1,0 +1,43 @@
+// ==========================================================================
+// Aula Accesible · hoja de estilos principal
+// Metodología: BEM (bloque__elemento--modificador). Estados con atributos
+// ARIA ([aria-pressed], [aria-current], [hidden]), no con clases.
+// Compilar: npx sass scss/main.scss css/main.css --style=compressed --source-map
+// ==========================================================================
+
+// 1. Base
+@use 'base/reset';
+@use 'base/base';
+@use 'base/a11y';
+
+// 2. Layout
+@use 'layout/header';
+@use 'layout/footer';
+@use 'layout/live';
+@use 'layout/content';
+
+// 3. Componentes genéricos
+@use 'components/button';
+@use 'components/icon-button';
+@use 'components/segmented';
+@use 'components/chip';
+@use 'components/badge';
+@use 'components/avatar';
+@use 'components/feedback';
+
+// 4. Componentes del traductor
+@use 'components/panel';
+@use 'components/alumno';
+@use 'components/stage';
+@use 'components/camera';
+@use 'components/turn';
+@use 'components/subtitle';
+@use 'components/confirm';
+@use 'components/camera-controls';
+@use 'components/conversation';
+@use 'components/composer';
+@use 'components/writer';
+
+// 5. Páginas y herramientas
+@use 'components/sources';
+@use 'components/demo';

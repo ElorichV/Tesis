@@ -1,0 +1,62 @@
+// ==========================================================================
+// Tokens de diseño · Aula Accesible
+// Paleta reducida: 4 colores base + 2 derivados de texto secundario.
+// Contrastes (WCAG 2.x) verificados en la guía visual.
+// ==========================================================================
+
+// ---- Color base -----------------------------------------------------------
+$obsidiana: #0B0D12;        // texto sobre claro (17.6:1) · fondos oscuros
+$azul-metalico: #344B68;    // tarjetas y paneles (texto claro encima: 8.1:1)
+$neon: #B6FF3B;             // SOLO acción principal, selección y foco (sobre azul/obsidiana)
+$neon-hover: #CCFF7A;
+$blanco-suave: #F2F4F7;     // fondo de página · texto sobre azul
+
+// ---- Derivados (solo texto secundario y deshabilitados) --------------------
+$texto-2-claro: #4A5263;    // secundario sobre blanco suave (7.1:1)
+$texto-2-azul: #C3CBD7;     // secundario sobre azul metálico (5.5:1)
+$deshabilitado-claro: #6B7486;
+$deshabilitado-azul: #AEB7C6;
+
+// ---- Tipografía -----------------------------------------------------------
+$font-ui: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', sans-serif;
+$font-mono: 'Atkinson Hyperlegible Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+$text-xs: 12px;
+$text-sm: 13px;
+$text-md: 15px;
+$text-base: 17px;
+$text-lg: 19px;
+$text-xl: 21px;
+$text-xxl: 26px;
+
+// ---- Forma y espacio (base 4) ---------------------------------------------
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 14px;
+$radius-pill: 999px;
+
+$space-1: 4px;
+$space-2: 8px;
+$space-3: 12px;
+$space-4: 16px;
+$space-5: 24px;
+$space-6: 32px;
+$space-7: 48px;
+
+$container-max: 1320px;
+$gutter: 24px;
+$gutter-mobile: 16px;
+
+// ---- Puntos de corte -------------------------------------------------------
+$bp-mobile: 560px;          // por debajo: márgenes de 16 px
+$bp-desktop-w: 1000px;      // computadora: dos columnas
+$bp-desktop-h: 600px;       // y alto suficiente para la pantalla sin scroll
+$panel-split: 520px;        // ancho del panel a partir del cual se divide en columnas
+
+// ---- Capas ----------------------------------------------------------------
+$z-header: 20;
+$z-demo: 31;
+$z-toast: 50;
+
+// ---- Tiempos --------------------------------------------------------------
+$auto-send-ms: 1400ms;      // igual a CONFIG.AUTO_SEND_DELAY_MS en js/config.js

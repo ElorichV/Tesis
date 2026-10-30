@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" role="img" aria-label="Aula Accesible">
+  <rect x="0.75" y="0.75" width="38.5" height="38.5" rx="9" fill="#344B68" stroke="#C3CBD7" stroke-opacity="0.5" stroke-width="1.5"/>
+  <path d="M9 14.5c2.2-3 4.4-3 6.6 0s4.4 3 6.6 0 4.4-3 6.6 0" fill="none" stroke="#F2F4F7" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M9 22h22" stroke="#B6FF3B" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M9 29h13" stroke="#F2F4F7" stroke-width="2.6" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,28 @@
+@use '../abstracts/tokens' as *;
+
+// ==========================================================================
+// Pie de página compacto · .footer
+// ==========================================================================
+
+.footer {
+  flex: none;
+  border-top: 1px solid var(--line);
+}
+
+.footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-1 $space-5;
+  padding-top: $space-2;
+  padding-bottom: $space-2;
+  font-size: $text-sm;
+  color: var(--fg-2);
+}
+
+.footer__link {
+  color: var(--fg);
+  font-weight: 700;
+  text-underline-offset: 3px;
+}

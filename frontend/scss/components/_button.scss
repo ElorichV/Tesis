@@ -1,0 +1,110 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// ==========================================================================
+// Botón · .button
+// Variantes: --primary (neón, una por zona) · --secondary (contorno)
+//            --ghost (solo texto) · --tint (relleno tenue)
+// Tamaños:   --sm (44 px) · --xs (36 px) · --block (ancho completo)
+// Grupo de botones del mismo tamaño: .button-group
+// ==========================================================================
+
+.button {
+  @include reset-button;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px 22px;
+  border: 2px solid transparent;
+  border-radius: $radius-md;
+  font-weight: 700;
+  font-size: $text-base;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: background-color .15s, border-color .15s;
+
+  &[disabled] {
+    @include disabled;
+  }
+}
+
+.button--primary {
+  background: $neon;
+  color: $obsidiana; // 16.1:1
+
+  &:hover:not([disabled]) {
+    background: $neon-hover;
+  }
+}
+
+.button--secondary {
+  color: var(--fg);
+  border-color: var(--fg-2);
+
+  &:hover:not([disabled]) {
+    border-color: var(--fg);
+  }
+}
+
+.button--ghost {
+  color: var(--fg);
+  padding: 10px 14px;
+
+  &:hover:not([disabled]) {
+    background: var(--tint);
+  }
+}
+
+.button--tint {
+  color: var(--fg);
+  background: var(--tint);
+  border: 0;
+
+  &:hover:not([disabled]) {
+    background: var(--tint-hover);
+  }
+}
+
+.button--sm {
+  min-height: 44px;
+  padding: 8px 14px;
+  font-size: $text-md;
+}
+
+.button--xs {
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 9px;
+  font-size: $text-sm;
+}
+
+.button--block {
+  width: 100%;
+}
+
+// Botones de una misma categoría con el mismo ancho
+.button-group {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: $space-2;
+
+  > .button {
+    width: 100%;
+  }
+}
+
+// Enlace con aspecto de texto subrayado
+.text-button {
+  @include reset-button;
+  padding: $space-1 0;
+  font-weight: 700;
+  font-size: $text-md;
+  color: var(--fg);
+  text-decoration: underline;
+  text-decoration-color: var(--ring);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}

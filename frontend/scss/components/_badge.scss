@@ -1,0 +1,64 @@
+@use '../abstracts/tokens' as *;
+
+// ==========================================================================
+// Insignia · .badge
+// --pending: borde discontinuo (pendiente / por verificar)
+// --neutral: borde sólido tenue
+// ==========================================================================
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--fg-2);
+  border-radius: $radius-pill;
+  font-family: $font-mono;
+  font-size: $text-xs;
+  line-height: 1.3;
+  color: var(--fg);
+  white-space: nowrap;
+}
+
+.badge--pending {
+  border-style: dashed;
+}
+
+.badge--neutral {
+  border-color: var(--line-strong);
+  color: var(--fg-2);
+}
+
+// Chip «En vivo» sobre la cámara o la animación
+.live-chip {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid $neon;
+  border-radius: $radius-pill;
+  background: $obsidiana;
+  color: $blanco-suave;
+  font-family: $font-mono;
+  font-size: 11px;
+
+  &::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: $neon;
+  }
+}
+
+.live-chip--idle {
+  border-color: $texto-2-azul;
+
+  &::before {
+    background: transparent;
+    border: 1.5px solid $texto-2-azul;
+  }
+}

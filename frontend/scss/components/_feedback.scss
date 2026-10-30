@@ -1,0 +1,72 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// ==========================================================================
+// Avisos · .hint / .banner / .toast
+// Errores: borde sólido + ícono + texto. Avisos: texto en negrita + ícono.
+// ==========================================================================
+
+// ---- Aviso de una línea ----------------------------------------------------
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  font-size: $text-md;
+  line-height: 1.4;
+  color: var(--fg-2);
+}
+
+.hint--warn {
+  font-weight: 700;
+  color: var(--fg);
+}
+
+// ---- Franja de error de conexión -----------------------------------------
+
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px $space-4;
+  margin-top: $space-4;
+  padding: 10px $space-4;
+  border: 2px solid var(--fg);
+  border-radius: $radius-md;
+  font-weight: 700;
+}
+
+.banner__text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+// ---- Mensaje temporal --------------------------------------------------------
+
+.toast {
+  @include context-surface;
+  position: fixed;
+  left: 50%;
+  bottom: $space-5;
+  z-index: $z-toast;
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  width: min(520px, calc(100% - 32px));
+  padding: 10px 10px 10px $space-4;
+  border: 1px solid var(--fg-2);
+  border-radius: $radius-md;
+  transform: translateX(-50%);
+}
+
+.toast--warn {
+  border: 2px solid var(--fg);
+}
+
+.toast__text {
+  flex: 1;
+  font-size: 16px;
+  line-height: 1.4;
+}

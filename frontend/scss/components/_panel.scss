@@ -1,0 +1,54 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// ==========================================================================
+// Panel · .panel (tarjetas Alumno y Maestro)
+// Superficie azul metálico con borde sutil (azul/fondo = 2.2:1, el borde
+// delimita). Contenedor de consultas: name "panel".
+// ==========================================================================
+
+.panel {
+  @include context-surface;
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  min-width: 0;
+  padding: $space-4 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: $radius-lg;
+  container-type: inline-size;
+  container-name: panel;
+
+  @include mobile {
+    padding: 14px;
+  }
+
+  @include desktop {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+
+.panel__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.panel__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: $text-xl;
+  line-height: 1.2;
+}
+
+.panel__footer {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}

@@ -1,0 +1,111 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// ==========================================================================
+// Página de fuentes · .info-grid / .info-card / .source-list / .data-grid
+// ==========================================================================
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 14px;
+}
+
+.info-card {
+  @include context-surface;
+  padding: 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: $radius-lg;
+}
+
+.info-card__title {
+  margin-bottom: $space-2;
+  font-size: 16px;
+}
+
+.info-card__list {
+  padding-left: 18px;
+  font-size: $text-md;
+  line-height: 1.5;
+
+  li {
+    margin-bottom: $space-1;
+  }
+}
+
+// ---- Lista de fuentes desplegables -------------------------------------------
+
+.source-list {
+  display: grid;
+  gap: $space-2;
+  list-style: none;
+}
+
+.source-list__item {
+  @include context-surface;
+  border: 1px solid var(--line-strong);
+  border-radius: $radius-md;
+}
+
+.source-list__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  min-height: 56px;
+  padding: $space-2 18px;
+  font-weight: 700;
+  list-style: none;
+  cursor: pointer;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  &::after {
+    content: '+';
+    margin-left: $space-2;
+    font-family: $font-mono;
+    color: var(--fg-2);
+  }
+
+  [open] > &::after {
+    content: '–';
+  }
+
+  .badge {
+    margin-left: auto;
+  }
+}
+
+.source-list__summary--static {
+  cursor: default;
+
+  &::after {
+    content: none;
+  }
+}
+
+.source-list__note {
+  padding: 0 18px $space-4;
+}
+
+// ---- Datos de una fuente --------------------------------------------------------
+
+.data-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: $space-3 $space-5;
+  padding: $space-1 18px 18px;
+}
+
+.data-grid__term {
+  font-family: $font-mono;
+  font-size: $text-xs;
+  color: var(--fg-2);
+}
+
+.data-grid__value {
+  margin-top: 2px;
+  font-size: 16px;
+}

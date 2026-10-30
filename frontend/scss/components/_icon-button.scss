@@ -1,0 +1,33 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// ==========================================================================
+// Botón de ícono · .icon-button
+// Relleno tenue, sin borde. Siempre con aria-label.
+// ==========================================================================
+
+.icon-button {
+  @include reset-button;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: $radius-md;
+  background: var(--tint);
+  color: var(--fg);
+
+  &:hover:not([disabled]) {
+    background: var(--tint-hover);
+  }
+
+  &[disabled] {
+    @include disabled;
+  }
+}
+
+// Variante con contorno para cerrar avisos
+.icon-button--outline {
+  background: transparent;
+  border: 1px solid var(--fg-2);
+}
