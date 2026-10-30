@@ -6,15 +6,15 @@ import argparse
 import logging
 import sys
 import time
+from pathlib import Path
 from typing import Any
 
 import cv2
 import numpy as np
 
 from app.config import get_alphabet_spec, load_config
-from app.overlay import draw_collect_hud, draw_perception_overlay, draw_run_hud
 from capture.camera import CameraError, CameraStream, FPSCounter
-from perception.mediapipe_tracker import PerceptionTracker
+from recognition.bootstrap import ensure_bootstrap_static_csv
 from recognition.collector import SampleCollector, get_collection_guidance
 from recognition.predictor import SignPredictor
 from recognition.trainer import format_confusion_matrix, train_models
@@ -31,7 +31,21 @@ def _print_alphabet_summary(spec: dict[str, Any]) -> None:
     print("=" * 72)
 
 
-def _create_tracker(cfg: dict[str, Any]) -> PerceptionTracker:
+def _print_mediapipe_install_hint(exc: Exception) -> None:
+    if isinstance(exc, ImportError) and "mediapipe" in str(exc).lower():
+        print(
+            r"Instala dependencias: .\.venv\Scripts\python.exe -m pip install -r requirements.txt",
+            file=sys.stderr,
+        )
+
+
+def _create_tracker(cfg: dict[str, Any]) -> Any:
+    try:
+        from perception.mediapipe_tracker import PerceptionTracker
+    except ImportError as exc:
+        _print_mediapipe_install_hint(exc)
+        raise
+
     p_cfg = cfg.get("perception", {})
     return PerceptionTracker(
         models_dir=p_cfg.get("models_dir", "models/mediapipe"),
@@ -43,6 +57,62 @@ def _create_tracker(cfg: dict[str, Any]) -> PerceptionTracker:
         enable_pose=bool(p_cfg.get("enable_pose", True)),
         blendshape_thresholds=p_cfg.get("face_blendshape_thresholds"),
     )
+
+
+def _ensure_recognition_ready(cfg: dict[str, Any], spec: dict[str, Any]) -> bool:
+    """Prepara modelos de percepción y crea el clasificador público si hace falta."""
+    try:
+        from perception.mediapipe_tracker import ensure_model_downloaded
+
+        p_cfg = cfg.get("perception", {})
+        models_dir = Path(p_cfg.get("models_dir", "models/mediapipe"))
+        model_files = [("hand_landmarker.task", True)]
+        model_files.extend(
+            [
+                ("face_landmarker.task", bool(p_cfg.get("enable_face", True))),
+                ("pose_landmarker_lite.task", bool(p_cfg.get("enable_pose", True))),
+            ]
+        )
+        for filename, enabled in model_files:
+            if enabled:
+                ensure_model_downloaded(models_dir, filename)
+
+        rec_cfg = cfg.get("recognition", {})
+        static_model_path = Path(rec_cfg.get("model_path", "models/sign_classifier.joblib"))
+        if static_model_path.exists():
+            return True
+        if not rec_cfg.get("bootstrap_public_dataset", False):
+            return False
+
+        print(
+            "[MediaPipe] No hay modelo entrenado: generando un modelo inicial con el "
+            "dataset público ASL (CC-BY-4.0)…"
+        )
+        bootstrap_csv = ensure_bootstrap_static_csv(cfg, spec)
+        reports = train_models(
+            static_csv=rec_cfg.get("dataset_csv", "data/landmarks_static.csv"),
+            dynamic_csv=rec_cfg.get("dynamic_dataset_csv", "data/landmarks_dynamic.csv"),
+            static_model_path=static_model_path,
+            dynamic_model_path=rec_cfg.get(
+                "dynamic_model_path", "models/sign_dynamic_classifier.joblib"
+            ),
+            classifier_type=rec_cfg.get("classifier_type", "mlp"),
+            alphabet=spec["code"],
+            bootstrap_static_csv=bootstrap_csv,
+        )
+        if not reports:
+            raise RuntimeError("No se generó el reporte del modelo estático.")
+        report = reports[0]
+        print(
+            f"[MediaPipe] Accuracy del modelo inicial: {report.accuracy:.2%}; "
+            f"clases: {', '.join(report.classes)}"
+        )
+        return static_model_path.exists()
+    except Exception as exc:
+        _print_mediapipe_install_hint(exc)
+        detail = str(exc).splitlines()[0] if str(exc) else type(exc).__name__
+        print(f"[Aviso] No se pudo preparar el reconocimiento: {detail}", file=sys.stderr)
+        return False
 
 
 def _create_camera(cfg: dict[str, Any], camera_override: int | None = None) -> CameraStream:
@@ -167,6 +237,13 @@ def _create_run_components(
 
 def cmd_collect(args: argparse.Namespace) -> int:
     """Modo de captura interactiva de landmarks (estáticos y dinámicos) con la webcam."""
+    try:
+        from app.overlay import draw_collect_hud, draw_perception_overlay
+    except ImportError as exc:
+        _print_mediapipe_install_hint(exc)
+        print(f"[ERROR DE PERCEPCIÓN] {exc}", file=sys.stderr)
+        return 1
+
     cfg = load_config(args.config)
     spec = get_alphabet_spec(cfg, args.alphabet)
     _print_alphabet_summary(spec)
@@ -323,6 +400,12 @@ def cmd_train(args: argparse.Namespace) -> int:
     clf_type = args.classifier or rec_cfg.get("classifier_type", "mlp")
 
     try:
+        bootstrap_csv = None
+        if (
+            not getattr(args, "no_bootstrap", False)
+            and rec_cfg.get("bootstrap_public_dataset", False)
+        ):
+            bootstrap_csv = ensure_bootstrap_static_csv(cfg, spec)
         reports = train_models(
             static_csv=rec_cfg.get("dataset_csv", "data/landmarks_static.csv"),
             dynamic_csv=rec_cfg.get("dynamic_dataset_csv", "data/landmarks_dynamic.csv"),
@@ -332,8 +415,10 @@ def cmd_train(args: argparse.Namespace) -> int:
             ),
             classifier_type=clf_type,
             alphabet=spec["code"],
+            bootstrap_static_csv=bootstrap_csv,
         )
-    except (FileNotFoundError, ValueError) as exc:
+    except Exception as exc:
+        _print_mediapipe_install_hint(exc)
         print(f"[ERROR DE ENTRENAMIENTO] {exc}", file=sys.stderr)
         return 1
 
@@ -357,6 +442,17 @@ def cmd_run(args: argparse.Namespace) -> int:
     """Ejecuta el traductor de señas a texto y voz en tiempo real."""
     cfg = load_config(args.config)
     spec = get_alphabet_spec(cfg, args.alphabet)
+    use_synthetic = bool(args.headless_benchmark)
+    if not use_synthetic:
+        _ensure_recognition_ready(cfg, spec)
+
+    try:
+        from app.overlay import draw_perception_overlay, draw_run_hud
+    except ImportError as exc:
+        _print_mediapipe_install_hint(exc)
+        print(f"[ERROR DE PERCEPCIÓN] {exc}", file=sys.stderr)
+        return 1
+
     _print_alphabet_summary(spec)
 
     sp_cfg = cfg.get("speech", {})
@@ -366,7 +462,12 @@ def cmd_run(args: argparse.Namespace) -> int:
         cfg, target_lang, async_playback=not args.headless_benchmark
     )
 
-    tracker = _create_tracker(cfg)
+    try:
+        tracker = _create_tracker(cfg)
+    except Exception as exc:
+        _print_mediapipe_install_hint(exc)
+        print(f"[ERROR DE PERCEPCIÓN] {exc}", file=sys.stderr)
+        return 1
     fps_counter = FPSCounter()
     last_spoken = ""
 
@@ -382,7 +483,6 @@ def cmd_run(args: argparse.Namespace) -> int:
         text_buffer.clear()
 
     camera: CameraStream | None = None
-    use_synthetic = bool(args.headless_benchmark)
     if not use_synthetic:
         try:
             camera = _create_camera(cfg, args.camera)
@@ -520,6 +620,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Tipo de clasificador: 'mlp' o 'knn'.",
     )
     p_train.add_argument("--alphabet", type=str, default=None, help="Alfabeto (ASL o LSM).")
+    p_train.add_argument(
+        "--no-bootstrap",
+        action="store_true",
+        help="Entrena solo con las muestras CSV propias.",
+    )
     p_train.set_defaults(func=cmd_train)
 
     # Subcomando: run

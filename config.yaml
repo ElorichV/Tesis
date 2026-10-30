@@ -101,6 +101,7 @@ recognition:
   model_path: "models/sign_classifier.joblib"
   dynamic_model_path: "models/sign_dynamic_classifier.joblib"
   classifier_type: "mlp"        # "mlp" (MLPClassifier) o "knn" (KNeighborsClassifier)
+  bootstrap_public_dataset: true # Dataset público de landmarks ASL, CC-BY-4.0
 
 text:
   stability_frames: 12          # N frames consecutivos estables para aceptar una letra

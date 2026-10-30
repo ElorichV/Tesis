@@ -107,6 +107,14 @@ python -m app run
 ```
 *(O con el entorno virtual explícito: `.\.venv\Scripts\python.exe -m app run`).*
 
+### Modelo inicial automático
+
+En el primer arranque, `app run` y `app web` generan un modelo estático inicial con el
+dataset público de landmarks ASL (CC-BY-4.0). Después de capturar muestras propias con
+`collect`, ejecuta `train`: tus letras reemplazan las muestras públicas de esas clases.
+Para LSM se recomienda recolectar y entrenar tus propias letras, porque el modelo inicial
+usa señas ASL. `python -m app train --no-bootstrap` entrena sin usar el dataset público.
+
 #### Controles y Gestos en Vivo (`run`)
 | Acción | Gesto Facial / Manual (configurable en `config.yaml`) | Atajo de Teclado |
 |---|---|---|

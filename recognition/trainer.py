@@ -50,14 +50,26 @@ def _train_single_csv(
     classifier_type: str,
     alphabet: str,
     phase_name: str,
+    base_csv: Path | None = None,
 ) -> TrainingReport:
-    if not csv_path.exists() or csv_path.stat().st_size == 0:
+    user_exists = csv_path.exists() and csv_path.stat().st_size > 0
+    base_exists = base_csv is not None and base_csv.exists() and base_csv.stat().st_size > 0
+    if not user_exists and not base_exists:
         raise FileNotFoundError(
             f"No se encontró el archivo de datos '{csv_path}'. "
             "Ejecuta primero: python -m app collect"
         )
 
-    df = pd.read_csv(csv_path)
+    user_df = pd.read_csv(csv_path) if user_exists else None
+    base_df = pd.read_csv(base_csv) if base_exists else None
+    if user_df is not None and base_df is not None:
+        if "label" in user_df.columns and "label" in base_df.columns:
+            user_labels = user_df["label"].astype(str).str.upper().unique()
+            base_df = base_df[~base_df["label"].astype(str).str.upper().isin(user_labels)]
+        df = pd.concat([base_df, user_df], ignore_index=True)
+    else:
+        df = user_df if user_df is not None else base_df
+
     if "label" not in df.columns or len(df) < 4:
         raise ValueError(
             f"El dataset '{csv_path}' tiene muy pocas muestras ({len(df)}). "
@@ -142,6 +154,7 @@ def train_models(
     dynamic_model_path: str | Path = "models/sign_dynamic_classifier.joblib",
     classifier_type: str = "mlp",
     alphabet: str = "ASL",
+    bootstrap_static_csv: str | Path | None = None,
 ) -> list[TrainingReport]:
     """
     Entrena el modelo estático (Fase 1) y, si existen suficientes datos dinámicos,
@@ -155,6 +168,7 @@ def train_models(
         classifier_type=classifier_type,
         alphabet=alphabet,
         phase_name="Fase 1 (Letras Estáticas)",
+        base_csv=Path(bootstrap_static_csv) if bootstrap_static_csv is not None else None,
     )
     reports.append(static_report)
 
@@ -173,4 +187,3 @@ def train_models(
             print(f"[Aviso Fase 2] Se omite entrenamiento dinámico: {exc}")
 
     return reports
-

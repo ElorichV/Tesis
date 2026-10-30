@@ -18,7 +18,12 @@ from urllib.parse import parse_qs, unquote, urlparse
 import cv2
 import numpy as np
 
-from app.cli import _create_run_components, _create_speech_output, _create_tracker
+from app.cli import (
+    _create_run_components,
+    _create_speech_output,
+    _create_tracker,
+    _ensure_recognition_ready,
+)
 from app.config import get_alphabet_spec, load_config
 from avatar.lexicon import Lexicon
 from avatar.server import ensure_handshape_library, list_lexicon, translate_text
@@ -558,6 +563,8 @@ def serve(
     no_voice: bool = False,
 ) -> None:
     cfg = load_config(config_path)
+    spec = get_alphabet_spec(cfg, alphabet)
+    _ensure_recognition_ready(cfg, spec)
     configured_port = int(cfg.get("web", {}).get("port", 8000))
     server = create_server(
         host,
