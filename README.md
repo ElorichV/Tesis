@@ -1,161 +1,195 @@
-# Traductor de Lenguaje de Señas a Voz en Tiempo Real
+<div align="center">
 
-Prototipo modular en Python que traduce el deletreo manual (abecedario de lengua de señas) a texto y voz en tiempo real empleando la cámara web y ejecutándose al 100% en CPU local:
+# 🤟 Voz abierta
 
-```text
-Cámara Web -> Percepción (Manos 21 pts + Cara/Blendshapes + Pose de brazos)
-           -> Normalización invariante -> Clasificador (Fase 1 estático / Fase 2 dinámico)
-           -> Buffer de estabilidad + Gestos de control -> Post-procesamiento (Gemini opcional)
-           -> Síntesis de voz (adaptador a voice-translate)
-```
+**Puente en tiempo real entre la Lengua de Señas Mexicana y el español hablado, para que el salón de clases funcione en las dos direcciones.**
 
-> **Privacidad**: El video nunca se guarda en disco ni se envía a ningún servicio externo. Solo se almacenan vectores numéricos de landmarks en CSV y a Gemini (si se configura clave) únicamente se envía la secuencia de letras en texto plano.
+El maestro habla y un avatar 3D lo seña. El alumno seña frente a la cámara y la computadora lo dice en voz alta.<br/>
+Todo corre en una laptop, sin GPU y sin mandar video a la nube.
 
----
+`Python 3.11` · `MediaPipe Tasks` · `scikit-learn` · `Three.js` · `Blender` · `Web Speech API` · `Coqui TTS`
 
-## Arquitectura del Proyecto
+*Prototipo para el AI Hackathon por México × Clara*
 
-```text
-capture/      -> Gestión de cámara (CAP_DSHOW en Windows) y medición de FPS
-perception/   -> MediaPipe Tasks: HandLandmarker, FaceLandmarker (blendshapes) y PoseLandmarker
-features/     -> Normalización invariante (traslación, escala y espejado de mano) y ventana temporal
-recognition/  -> Recolección a CSV (collect), entrenamiento scikit-learn (train) e inferencia (run)
-text/         -> Buffer de estabilidad, bloqueo anti-repetición, gestos de control y Gemini opcional
-speech/       -> Adaptador SpeechOutput.speak() reutilizando ./voice-translate sin modificarlo
-app/          -> CLI unificada (python -m app [collect|train|run]) y renderizado de overlay OpenCV
-tests/        -> Pruebas unitarias deterministas con pytest (sin requerir cámara)
-config.yaml   -> Umbrales, alfabetos (ASL y LSM), idioma, modelo Gemini y gestos de control
-```
+</div>
 
 ---
 
-## Alfabetos Soportados: Letras Estáticas vs. Dinámicas
+## El problema
 
-Configurables desde `config.yaml` (`alphabet: "ASL"` por defecto; `"LSM"` listo para usar) o por línea de comandos (`--alphabet ASL` / `--alphabet LSM`):
+Un alumno sordo que usa **LSM** suele estar en un salón donde nadie más la conoce, y casi nunca hay un intérprete disponible. Las herramientas que existen traducen en **un solo sentido** (de voz a subtítulos), así que el alumno puede leer al maestro, pero el maestro no puede entender al alumno.
 
-### 1. ASL (*American Sign Language* — por defecto)
-- **Estáticas (24 letras — Fase 1)**: `A, B, C, D, E, F, G, H, I, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y`
-- **Dinámicas / con movimiento (2 letras — Fase 2)**: `J` (curva con el meñique), `Z` (trazo en zigzag con el índice)
+## La solución
 
-### 2. LSM (*Lengua de Señas Mexicana*)
-- **Estáticas (21 letras — Fase 1)**: `A, B, C, D, E, F, G, H, I, L, M, N, O, P, R, S, T, U, V, W, Y`
-- **Dinámicas / con movimiento (6 letras — Fase 2)**: `J, K, Ñ, Q, X, Z`
+**Voz abierta** es una sola pantalla que comparten el alumno y el maestro:
 
----
-
-## Requisitos e Instalación
-
-### 1. Entorno Virtual (Python 3.11)
-El repositorio reutilizado [`voice-translate`](https://github.com/cccaballero/voice-translate) fija Python 3.11 (`.python-version`) para compatibilidad con Coqui TTS y MediaPipe:
-
-```powershell
-# Crear entorno virtual con Python 3.11
-python -m venv .venv
-.\.venv\Scripts\activate
-
-# Instalar dependencias unificadas
-pip install -r requirements.txt
-```
-*(Si usas `uv`: `uv venv --python 3.11 .venv` y `uv pip install --python .venv\Scripts\python.exe -r requirements.txt`).*
-
-### 2. Dependencias del Sistema para `voice-translate`
-- **Audio (PortAudio / MCI)**: En Windows, `sounddevice`, `playsound` y el respaldo nativo `winsound` funcionan de serie sin instalar paquetes adicionales. En Linux se requiere `sudo apt install portaudio19-dev espeak-ng` y en macOS `brew install portaudio espeak`.
-- **Compatibilidad Windows para Coqui TTS**: El paquete original `TTS==0.22.0` solo publica ruedas precompiladas para Linux y exige *Microsoft Visual C++ 14.0 Build Tools* en Windows. En `requirements.txt` se incluye `coqui-tts` para Windows, que instala el mismo módulo `from TTS.api import TTS` desde ruedas precompiladas (`win_amd64`) sin modificar `voice-translate`.
-
-### 3. Permisos de Cámara en Windows
-Si la cámara no abre:
-1. Ve a **Configuración de Windows -> Privacidad y seguridad -> Cámara**.
-2. Activa **Acceso a la cámara** y **Permitir que las aplicaciones de escritorio accedan a la cámara**.
-3. El sistema prueba primero `cv2.CAP_DSHOW` (`use_dshow_on_windows: true` en `config.yaml`) y hace fallback automático a `cv2.CAP_ANY`.
-
-### 4. Post-procesamiento con Gemini (Opcional)
-Para corregir secuencias deletreadas (`"H O L A"` -> `"hola"`):
-1. Copia `.env.example` a `.env`.
-2. Define `GEMINI_API_KEY=tu_clave` y opcionalmente `GEMINI_MODEL=gemini-2.5-flash`.
-3. Si no hay clave o no hay conexión, el sistema continúa funcionando localmente sin interrupciones.
-
----
-
-## Flujo de Uso (`collect` -> `train` -> `run`)
-
-### Paso 1: Capturar tus propias muestras (`collect`)
-Como el reconocimiento opera sobre landmarks geométricos normalizados, captura tus muestras frente a la webcam:
-
-```powershell
-.\.venv\Scripts\python.exe -m app collect --alphabet ASL --letter A --samples 150
-```
-- En la ventana interactiva:
-  - Pulsa cualquier tecla **`A`–`Z`** o **`Tab`** para elegir la letra objetivo.
-  - Pulsa **`Espacio`** para iniciar la captura del lote (150 muestras por defecto para letras estáticas; 20 secuencias de 25 frames para letras dinámicas como `J` y `Z`).
-  - Sigue los avisos en pantalla (rotar suavemente el ángulo en el segundo tercio y acercar/alejar la mano en el último tercio).
-  - Los datos se guardan incrementalmente en `data/landmarks_static.csv` y `data/landmarks_dynamic.csv`.
-
-### Paso 2: Entrenar el clasificador (`train`)
-Una vez capturadas al menos 2 letras distintas:
-
-```powershell
-.\.venv\Scripts\python.exe -m app train --classifier mlp
-```
-- Muestra en consola el **accuracy de validación**, el reporte por clase y la **matriz de confusión**.
-- Guarda el modelo estático en `models/sign_classifier.joblib` (y el dinámico en `models/sign_dynamic_classifier.joblib` si capturaste letras dinámicas).
-
-### Paso 3: Traducción en vivo (`run`)
-Comando único de arranque:
-
-```powershell
-python -m app run
-```
-*(O con el entorno virtual explícito: `.\.venv\Scripts\python.exe -m app run`).*
-
-### Modelo inicial automático
-
-En el primer arranque, `app run` y `app web` generan un modelo estático inicial con el
-dataset público de landmarks ASL (CC-BY-4.0). Después de capturar muestras propias con
-`collect`, ejecuta `train`: tus letras reemplazan las muestras públicas de esas clases.
-Para LSM se recomienda recolectar y entrenar tus propias letras, porque el modelo inicial
-usa señas ASL. `python -m app train --no-bootstrap` entrena sin usar el dataset público.
-
-#### Controles y Gestos en Vivo (`run`)
-| Acción | Gesto Facial / Manual (configurable en `config.yaml`) | Atajo de Teclado |
+| Dirección | Qué pasa | Tecnología |
 |---|---|---|
-| **Aceptar letra** | Mantener la seña estable durante 12 frames con confianza $\ge 70\%$ | — |
-| **Insertar espacio** | Abrir la boca (`mouth_open`) sostenido ~0.8 s | `Espacio` |
-| **Borrar última letra** | Fruncir cejas (`brow_down`) sostenido ~0.8 s | `Backspace` |
-| **Confirmar y hablar** | Levantar cejas (`brow_up`) o puño izquierdo (`fist_left`) ~0.8 s | `Enter` |
-| **Limpiar texto** | — | `C` |
-| **Salir** | — | `Q` o `ESC` |
+| **Maestro → Alumno** | El maestro escribe o dicta; el texto se convierte en glosa LSM y un **avatar 3D** la seña, con el texto sencillo de apoyo. | Web Speech API → léxico LSM → IK en Three.js |
+| **Alumno → Maestro** | El alumno seña frente a la cámara; aparece texto en vivo y el mensaje final **se lee en voz alta**. | MediaPipe (manos + cara + pose) → clasificador → TTS |
+
+> **Privacidad por diseño:** el video nunca sale de la máquina ni se guarda en disco. Solo se procesan vectores de landmarks. Si configuras Gemini, solo recibe la secuencia de letras en texto plano.
 
 ---
 
-## Pruebas Unitarias
-
-Ejecutar la suite de pruebas (normalización invariante de landmarks, trayectorias dinámicas, filtro de estabilidad, bloqueo anti-repetición, gestos y pipeline de entrenamiento):
+## Demo en 2 minutos
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest -v
+git clone https://github.com/ElorichV/Voz-abierta.git
+cd Voz-abierta
+python -m venv .venv
+.\.venv\Scripts\pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m app web
+```
+
+Abre **http://127.0.0.1:8000** en Chrome o Edge y permite la cámara y el micrófono.
+
+En el primer arranque, la app se prepara sola:
+1. Descarga los modelos de MediaPipe (`hand`, `face` y `pose_landmarker`).
+2. Entrena un **clasificador inicial de 24 letras** con un dataset público de landmarks (~97 % en validación). Corre en CPU.
+
+Prueba rápida: escribe *"hola, ¿cómo estás?"* como maestro y mira al avatar señar. Luego enciende la cámara y sostén una letra (A, B, L…) quieta un momento.
+
+> Sin backend: `cd frontend && python -m http.server 8000` abre el **modo demo** con datos simulados, útil para presentar la interfaz sin cámara.
+
+---
+
+## Arquitectura
+
+```mermaid
+flowchart LR
+  subgraph Navegador["Navegador · frontend/"]
+    MIC[Micrófono<br/>Web Speech API]
+    CAM[Cámara<br/>JPEG 640px @10 Hz]
+    AV[Avatar 3D<br/>Three.js + IK]
+    UI[Conversación]
+  end
+  subgraph Servidor["python -m app web · app/web.py"]
+    TR[POST /traducir-texto]
+    LEX[Léxico LSM<br/>texto → glosa → keyframes]
+    WS[WebSocket /reconocer]
+    MP[MediaPipe Tasks<br/>21 pts mano · blendshapes · pose]
+    CLF[SignPredictor<br/>MLP estático + dinámico]
+    BUF[StableTextBuffer<br/>estabilidad + gestos]
+    TTS[SpeechOutput<br/>voice-translate]
+  end
+  MIC --> TR --> LEX --> AV
+  CAM --> WS --> MP --> CLF --> BUF --> UI
+  BUF --> TTS
+```
+
+**Decisiones clave**
+
+- **Un solo pipeline, tres superficies.** `app run` (OpenCV), `app web` (navegador) y `app collect` usan los mismos `PerceptionTracker`, `SignPredictor` y `StableTextBuffer`. Lo que entrenas en uno funciona en los demás.
+- **Umbrales independientes del frame rate.** La web manda 10 cuadros/s y la webcam nativa lee 30. Los contadores de estabilidad y la ventana dinámica se reescalan (`web.frame_rate_hz`), así que un gesto dura lo mismo en ambos modos.
+- **Features invariantes.** Los landmarks se normalizan en traslación, escala y lateralidad: una mano izquierda se espeja a la canónica y la distancia a la cámara no afecta.
+- **Cero dependencias web nuevas.** El servidor HTTP y el WebSocket (RFC 6455) usan solo la biblioteca estándar, con validación de `Origin`, límites de tamaño y cabeceras JPEG verificadas antes de decodificar.
+- **Cold start resuelto.** Si no existe `models/sign_classifier.joblib`, se genera con el dataset público y espejado. Tus muestras de `collect` lo reemplazan letra por letra.
+
+```text
+app/          CLI (collect · train · run · avatar · web) y servidor web unificado
+perception/   MediaPipe Tasks: HandLandmarker, FaceLandmarker (blendshapes), PoseLandmarker
+features/     Normalización invariante y ventana temporal
+recognition/  Recolección a CSV, bootstrap público, entrenamiento e inferencia
+text/         Buffer de estabilidad, anti-repetición, gestos de control, Gemini opcional
+speech/       Adaptador SpeechOutput sobre ./voice-translate
+avatar/       Rig de Blender, cinemática, léxico LSM y visor Three.js
+frontend/     Aula Accesible: HTML + Sass (BEM) + ES modules, sin frameworks
+tests/        Suite pytest determinista (no requiere cámara ni GPU)
 ```
 
 ---
 
-## Limitaciones Conocidas
+## Comandos
 
-1. **Confusión entre puños cerrados frontales (`A`, `E`, `M`, `N`, `S`, `T`)**:
-   - En una sola vista 2D/2.5D frontal, la diferencia entre `M`, `N`, `T` y `S` depende de bajo qué dedos se asoma la punta del pulgar, lo que sufre auto-oclusión.
-   - **Cómo mitigarlo al capturar muestras**: durante `collect`, graba ~50 muestras adicionales de `M`, `N`, `T`, `S`, `A` y `E` inclinando la mano $15^\circ\text{--}25^\circ$ hacia la cámara para que el detector vea claramente la posición del pulgar.
-2. **Similitud geométrica entre `U` / `V` / `R` y `G` / `H` / `P` / `Q`**:
-   - `U` (índice y medio juntos) y `R` (índice y medio cruzados) tienen distancias entre puntas muy similares; capturar con buena iluminación frontal mejora la separación en el eje X/Z.
-3. **Iluminación a contraluz o desenfoque por movimiento rápido**:
-   - En señas dinámicas (`J`, `Z`, `Ñ`), un movimiento brusco con poca luz puede hacer perder el tracking de MediaPipe por 1–2 frames.
+| Comando | Para qué |
+|---|---|
+| `python -m app web` | **App completa** en `:8000`: maestro ↔ alumno con avatar, cámara y voz. Opciones: `--no-voice`, `--alphabet LSM`, `--lang es\|en`, `--port`. |
+| `python -m app run` | Traductor de escritorio (OpenCV) de cámara a texto y voz. |
+| `python -m app avatar` | Visor standalone del avatar LSM en `:8765`. |
+| `python -m app collect` | Captura tus propias señas (150 muestras por letra estática, 20 secuencias por dinámica). |
+| `python -m app train` | Entrena el clasificador; `--no-bootstrap` usa solo tus datos. |
 
-## Próximos Pasos Sugeridos
+En Windows, antepón `.\.venv\Scripts\python.exe` en lugar de `python`.
 
-1. **Palabras completas y glosas continuas**: Extender la ventana temporal (`TrajectoryBuffer`) para combinar ambas manos + puntos de hombros/cara (`Pose` + `Face`) en un clasificador secuencial (GRU/LSTM ligero o Temporal Convolutional Network) para señas léxicas completas.
-2. **Generalización multi-usuario**: Recolectar muestras de 5–10 personas con distintas morfologías de mano y aplicar *data augmentation* geométrico (rotaciones 3D aleatorias de $\pm 15^\circ$ y ruido gaussiano en articulaciones) durante `train`.
-3. **Gramática de lengua de señas con Gemini**: Aprovechar los blendshapes faciales (cejas arriba = pregunta sí/no; cejas fruncidas = pregunta *wh-*) como metadatos textuales en el prompt de Gemini para reconstruir la entonación e interrogación al sintetizar la voz.
+### Gestos de control (cámara)
 
+| Acción | Gesto | Teclado (`app run`) |
+|---|---|---|
+| Aceptar letra | Sostener la seña estable (≥ 70 % de confianza) | — |
+| Espacio | Abrir la boca ~0.8 s | `Espacio` |
+| Borrar | Fruncir las cejas ~0.8 s | `Backspace` |
+| Enviar y hablar | Levantar las cejas, puño izquierdo o **bajar las manos 1.5 s** (web) | `Enter` |
 
+---
 
-## Avatar 3D en LSM (`avatar/`)
+## Entrena el modelo con tus señas (recomendado para LSM)
+
+El modelo inicial usa landmarks públicos de **ASL**. Muchas letras coinciden con LSM, pero no todas. Para tu alfabeto:
+
+```powershell
+.\.venv\Scripts\python.exe -m app collect --alphabet LSM
+.\.venv\Scripts\python.exe -m app train   --alphabet LSM
+```
+
+| Alfabeto | Estáticas (Fase 1) | Dinámicas (Fase 2) |
+|---|---|---|
+| **ASL** | 24: `A–I, K–Y` | `J`, `Z` |
+| **LSM** | 21: `A B C D E F G H I L M N O P R S T U V W Y` | `J K Ñ Q X Z` |
+
+El entrenamiento imprime el accuracy de validación, el reporte por clase y la matriz de confusión.
+
+---
+
+## Configuración
+
+Todo vive en [`config.yaml`](config.yaml): cámara, umbrales de MediaPipe, alfabeto, estabilidad, gestos, voz y web.
+
+- **Gemini (opcional):** corrige el deletreo (`"H O L A"` → `"hola"`). Copia `.env.example` a `.env` y define `GEMINI_API_KEY`. Sin clave o sin conexión, todo sigue funcionando en local.
+- **Cámara en Windows:** si no abre, activa *Configuración → Privacidad → Cámara → apps de escritorio*. El sistema prueba `CAP_DSHOW` y, si falla, `CAP_ANY`.
+- **Micrófono:** el dictado usa Web Speech API (Chrome o Edge, con internet) y solo funciona en `localhost`/`127.0.0.1` o HTTPS.
+- **Voz:** `requirements.txt` instala `coqui-tts` con ruedas precompiladas para Windows, sin Visual C++ Build Tools.
+
+---
+
+## Calidad
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+La suite cubre la normalización de landmarks, las trayectorias dinámicas, el buffer de estabilidad, los gestos, el entrenamiento y el bootstrap. También prueba el handshake y los frames WebSocket, los límites HTTP, la validación de `Origin` y la integridad del GLB del avatar. Todo corre sin cámara ni GPU.
+
+---
+
+## Roadmap
+
+- [x] Traducción bidireccional en una sola app (`app web`)
+- [x] Avatar 3D con IK orgánica, anti-interpenetración y muñecas con límites reales
+- [x] Reconocimiento de letras estáticas y dinámicas con gestos faciales de control
+- [x] Modelo inicial automático (sin cold start)
+- [ ] Dataset LSM propio, multi-usuario y validado por la comunidad sorda
+- [ ] Señas léxicas completas con un modelo secuencial (GRU/TCN) sobre manos, pose y cara
+- [ ] Componentes no manuales en el avatar (expresión facial gramatical)
+- [ ] Validación del léxico con intérpretes certificados de LSM
+
+## Ética y alcance
+
+Voz abierta es un **prototipo de asistencia, no un sustituto de un intérprete**. Las 80 señas del léxico son adaptaciones (`revisado_por_interprete: false`) y la animación es experimental: falta validarla con personas sordas e intérpretes certificados. Las decisiones de producto deben tomarse con la comunidad sorda.
+
+## Créditos
+
+- [MediaPipe](https://ai.google.dev/edge/mediapipe) (Google): detección de manos, cara y pose.
+- [MakeHuman](https://github.com/makehumancommunity/makehuman): malla base del avatar (CC0).
+- [ASL Static Landmarks v1](https://huggingface.co/datasets/Siruyy/asl-static-landmarks-v1): landmarks para el modelo inicial (CC-BY-4.0).
+- [voice-translate](https://github.com/cccaballero/voice-translate): síntesis de voz.
+
+---
+
+<details>
+<summary><b>Deep dive técnico</b>: avatar, servidor web y limitaciones del reconocimiento</summary>
+
+### Avatar 3D en LSM (`avatar/`)
 
 Avatar de torso de una mujer semirrealista (complexión media femenina, piel morena, ojos azules,
 labios llenos, clavículas marcadas, bob corto azul despeinado con raya al lado y mechones sueltos,
@@ -219,20 +253,18 @@ coincide; conviene recapturar el alfabeto LSM con `python -m app collect` y reen
 léxico son descripciones adaptadas (`revisado_por_interprete: false`) y deben validarse con
 intérpretes de LSM. No hay expresión facial (componente no manual).
 
-## Aplicación web unificada (`python -m app web`)
+### Servidor web unificado
 
-Desde la raíz del repositorio, inicia juntos Aula Accesible, el avatar LSM y el reconocimiento en vivo:
+El servidor sirve el frontend en `/`, el visor compartido en `/avatar/`, el endpoint de salud en `/salud`, la traducción de texto en `POST /traducir-texto` y el reconocimiento WebSocket en `/reconocer`. La respuesta de traducción incluye `secuencia` (glosa y fotogramas clave) para el avatar. El host predeterminado es `127.0.0.1` (`--host`); el tiempo de manos abajo se configura en `web.hands_down_seconds`.
 
-```powershell
-.\.venv\Scripts\python.exe -m app web
-# abrir http://127.0.0.1:8000
-```
+### Limitaciones del reconocimiento
 
-- **Maestro → alumno:** escribe o dicta un mensaje; el backend genera la secuencia de señas y el avatar 3D la reproduce en el escenario.
-- **Alumno → maestro:** activa la cámara y señas; el reconocimiento muestra letras parciales y envía el texto al bajar las manos durante 1.5 segundos, o al usar el gesto configurado para hablar.
-- `--no-voice` desactiva la lectura de voz del texto reconocido; `--alphabet LSM` selecciona el alfabeto y `--lang es|en` configura el idioma.
-- La cámara del navegador solo funciona en `localhost` o HTTPS. Los cuadros JPEG se procesan localmente en el servidor y no se guardan.
+1. **Confusión entre puños cerrados frontales (`A`, `E`, `M`, `N`, `S`, `T`)**:
+   - En una sola vista 2D/2.5D frontal, la diferencia entre `M`, `N`, `T` y `S` depende de bajo qué dedos se asoma la punta del pulgar, lo que sufre auto-oclusión.
+   - **Cómo mitigarlo al capturar muestras**: durante `collect`, graba ~50 muestras adicionales de `M`, `N`, `T`, `S`, `A` y `E` inclinando la mano $15^\circ\text{--}25^\circ$ hacia la cámara para que el detector vea claramente la posición del pulgar.
+2. **Similitud geométrica entre `U` / `V` / `R` y `G` / `H` / `P` / `Q`**:
+   - `U` (índice y medio juntos) y `R` (índice y medio cruzados) tienen distancias entre puntas muy similares; capturar con buena iluminación frontal mejora la separación en el eje X/Z.
+3. **Iluminación a contraluz o desenfoque por movimiento rápido**:
+   - En señas dinámicas (`J`, `Z`, `Ñ`), un movimiento brusco con poca luz puede hacer perder el tracking de MediaPipe por 1–2 frames.
 
-El puerto por defecto es `8000` y puede cambiarse con `--port`; el host predeterminado es `127.0.0.1` (`--host` permite cambiarlo). El tiempo de manos abajo también se configura en `web.hands_down_seconds` de `config.yaml`.
-
-El servidor unificado sirve el frontend en `/`, el visor compartido en `/avatar/`, el endpoint de salud `/salud`, la traducción de texto en `POST /traducir-texto` y el reconocimiento WebSocket en `/reconocer`. La respuesta de traducción incluye `secuencia` con las señas para el avatar. Abrir `frontend/` con `python -m http.server` conserva el modo demostración sin backend.
+</details>
