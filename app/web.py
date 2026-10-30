@@ -313,7 +313,12 @@ class RecognitionSession:
         raw = self.text_buffer.text.strip()
         if not raw:
             if self.hands_seen_since_final:
-                self._emit("no_reconocido")
+                reason = (
+                    "sin_modelo"
+                    if not getattr(self.predictor, "is_ready", True)
+                    else "sin_letras"
+                )
+                self._emit("no_reconocido", motivo=reason)
             self.hands_seen_since_final = False
             self.last_no_hand_at = None
             return
@@ -339,6 +344,7 @@ class UnifiedWebHandler(SimpleHTTPRequestHandler):
     alphabet: str
     speech_out: Any | None
     frame_interval_ms: int
+    capture_width: int
 
     extensions_map = {
         **SimpleHTTPRequestHandler.extensions_map,
@@ -373,6 +379,8 @@ class UnifiedWebHandler(SimpleHTTPRequestHandler):
             b"<script>window.AULA_CONFIG={DEMO_MODE:false,API_URL:'',"
             b"FRAME_INTERVAL_MS:"
             + str(self.frame_interval_ms).encode("ascii")
+            + b",CAPTURE_WIDTH:"
+            + str(self.capture_width).encode("ascii")
             + b","
             b"RECOGNITION_WS_URL:(location.protocol==='https:'?'wss://':'ws://')"
             b"+location.host+'/reconocer'};</script>"
@@ -516,6 +524,7 @@ def create_server(
     frame_rate_hz = float(cfg.get("web", {}).get("frame_rate_hz", 10))
     if frame_rate_hz <= 0:
         raise ValueError("web.frame_rate_hz debe ser mayor que cero.")
+    capture_width = int(cfg.get("camera", {}).get("width", 640))
     shared_speech = (
         None if no_voice else _create_speech_output(cfg, language, async_playback=True)
     )
@@ -530,6 +539,7 @@ def create_server(
             "alphabet": spec["code"],
             "speech_out": shared_speech,
             "frame_interval_ms": round(1000 / frame_rate_hz),
+            "capture_width": capture_width,
         },
     )
     handler = partial(configured_handler, directory=str(FRONTEND_DIR))

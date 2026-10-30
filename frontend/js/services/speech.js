@@ -8,12 +8,19 @@ const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 export const isSupported = () => Boolean(Recognition);
 
+function permissionErrorReason(error) {
+  if (error?.name === 'NotAllowedError' || error?.name === 'SecurityError') return 'denied';
+  if (error?.name === 'NotFoundError' || error?.name === 'OverconstrainedError') return 'nomic';
+  if (error?.name === 'NotReadableError' || error?.name === 'AbortError') return 'busy';
+  return 'error';
+}
+
 /**
  * @param {{
  *   onPartial: (text: string, isFinal: boolean) => void,
  *   onSilence: () => void,
  *   onEnd: () => void,
- *   onError: (reason: 'denied'|'nomic'|'network'|'nospeech'|'aborted'|'error') => void
+ *   onError: (reason: 'denied'|'nomic'|'network'|'nospeech'|'aborted'|'busy'|'insecure'|'error') => void
  * }} handlers
  * @returns {() => void} detiene el reconocimiento e ignora eventos posteriores
  */
@@ -23,6 +30,11 @@ export function startDictation({ onPartial, onSilence, onEnd, onError }) {
   rec.interimResults = true;
   rec.continuous = false;
   let stopped = false;
+  const failStart = (reason) => {
+    if (stopped) return;
+    stopped = true;
+    onError(reason);
+  };
 
   rec.addEventListener('result', (event) => {
     if (stopped) return;
@@ -52,16 +64,44 @@ export function startDictation({ onPartial, onSilence, onEnd, onError }) {
     onError(reason);
   });
 
-  try {
-    rec.start();
-  } catch {
-    stopped = true;
-    onError('error');
-  }
-
-  return () => {
+  const stop = () => {
     if (stopped) return;
     stopped = true;
-    rec.abort();
+    try {
+      rec.abort();
+    } catch {}
   };
+
+  const startRecognition = () => {
+    if (stopped) return;
+    try {
+      rec.start();
+    } catch {
+      failStart('error');
+    }
+  };
+
+  const mediaDevices = globalThis.navigator?.mediaDevices;
+  if (!mediaDevices?.getUserMedia) {
+    failStart('insecure');
+    return stop;
+  }
+
+  let permissionRequest;
+  try {
+    permissionRequest = mediaDevices.getUserMedia({ audio: true });
+  } catch (error) {
+    failStart(permissionErrorReason(error));
+    return stop;
+  }
+  Promise.resolve(permissionRequest)
+    .then((stream) => {
+      stream.getTracks().forEach((track) => {
+        try { track.stop(); } catch {}
+      });
+      startRecognition();
+    })
+    .catch((error) => failStart(permissionErrorReason(error)));
+
+  return stop;
 }

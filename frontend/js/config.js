@@ -25,6 +25,9 @@ const DEFAULTS = {
   /** Intervalo de envío de cuadros JPEG al reconocimiento en vivo. */
   FRAME_INTERVAL_MS: 100,
 
+  /** Ancho de captura JPEG enviado al reconocimiento en vivo. */
+  CAPTURE_WIDTH: 640,
+
   /** Tiempos de la simulación. */
   DEMO: {
     CAMERA_PERMISSION_MS: 1000,

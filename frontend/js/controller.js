@@ -128,7 +128,7 @@ export function createController(store, { stageVideo, cameraVideo, stageAvatar }
         break;
       case 'unrecognized':
         set({ signPhase: 'ending', interim: '' });
-        scheduleSignCommit(null);
+        scheduleSignCommit(null, evt.reason);
         break;
       case 'quality':
         set({ quality: { framing: evt.framing ?? s.quality.framing, light: evt.light ?? s.quality.light } });
@@ -139,7 +139,7 @@ export function createController(store, { stageVideo, cameraVideo, stageAvatar }
   }
 
   /** Envío automático tras bajar las manos (se puede cancelar con «Cancelar»). */
-  function scheduleSignCommit(text) {
+  function scheduleSignCommit(text, reason) {
     clearTimeout(timers.signEnd);
     timers.signEnd = setTimeout(() => {
       set({ signPhase: null, interim: '' });
@@ -147,8 +147,11 @@ export function createController(store, { stageVideo, cameraVideo, stageAvatar }
         addMessage({ author: 'alumno', via: 'lsm', text });
         announce(`El alumno dijo: ${text}`);
       } else {
-        addMessage({ author: 'sistema', text: 'No reconocimos las señas. Pide que repita más despacio.' });
-        announce('No se reconocieron las señas.');
+        const message = reason === 'sin_modelo'
+          ? 'No hay un modelo de señas entrenado. Ejecuta «python -m app collect» y luego «python -m app train».'
+          : 'No reconocimos ninguna letra. Sostén cada letra quieta un momento, con la mano dentro del cuadro.';
+        addMessage({ author: 'sistema', text: message });
+        announce(message);
       }
     }, CONFIG.AUTO_SEND_DELAY_MS);
   }
@@ -261,6 +264,7 @@ export function createController(store, { stageVideo, cameraVideo, stageAvatar }
       },
       onSilence: () => {
         set({ micPhase: 'ending' });
+        clearTimeout(timers.micEnd);
         timers.micEnd = setTimeout(finishDictation, CONFIG.AUTO_SEND_DELAY_MS);
       },
       onEnd: () => {
@@ -282,6 +286,8 @@ export function createController(store, { stageVideo, cameraVideo, stageAvatar }
             nospeech: 'No se escuchó nada. Intenta de nuevo.',
             network: 'El dictado necesita conexión a internet (Chrome usa el servicio de Google). Escribe el mensaje o revisa tu conexión.',
             nomic: 'No se encontró un micrófono. Revisa que esté conectado y permitido en Windows.',
+            busy: 'Otra aplicación está usando el micrófono. Ciérrala e intenta de nuevo.',
+            insecure: 'El navegador solo permite el micrófono en http://127.0.0.1:8000 o https.',
           };
           if (messages[reason]) showToast(messages[reason], 'warn');
           else announce('Se interrumpió el dictado.');

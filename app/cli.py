@@ -84,6 +84,21 @@ def _text_buffer_frame_counts(
     return counts
 
 
+def _dynamic_window_frame_count(
+    cfg: dict[str, Any],
+    frame_rate_hz: float | None = None,
+) -> int:
+    """Ajusta la ventana temporal del predictor a la tasa de frames web."""
+    base_frames = int(cfg.get("features", {}).get("dynamic_window_frames", 25))
+    if frame_rate_hz is None:
+        return base_frames
+
+    camera_fps = float(cfg.get("camera", {}).get("fps", 30))
+    if camera_fps <= 0 or frame_rate_hz <= 0:
+        raise ValueError("Las tasas de frames deben ser mayores que cero.")
+    return max(3, round(base_frames * frame_rate_hz / camera_fps))
+
+
 def _create_speech_output(
     cfg: dict[str, Any],
     target_lang: str,
@@ -122,7 +137,7 @@ def _create_run_components(
             "dynamic_model_path", "models/sign_dynamic_classifier.joblib"
         ),
         canonical_hand=feat_cfg.get("canonical_hand", "Right"),
-        dynamic_window_frames=int(feat_cfg.get("dynamic_window_frames", 25)),
+        dynamic_window_frames=_dynamic_window_frame_count(cfg, frame_rate_hz),
         dynamic_min_motion=float(feat_cfg.get("dynamic_min_motion", 0.08)),
     )
     if warn_untrained and not predictor.is_ready:

@@ -13,6 +13,7 @@ from urllib.request import Request, urlopen
 import cv2
 import numpy as np
 
+import app.cli as cli_module
 import app.web as web_module
 from app.cli import _text_buffer_frame_counts
 from app.web import (
@@ -78,6 +79,7 @@ def test_unified_http_routes() -> None:
             assert "AULA_CONFIG" in index
             assert "DEMO_MODE:false" in index
             assert "FRAME_INTERVAL_MS:100" in index
+            assert "CAPTURE_WIDTH:640" in index
 
         with urlopen(base + "/avatar/js/viewer.js") as response:
             assert response.status == 200
@@ -259,6 +261,31 @@ def test_web_frame_thresholds_scale_from_camera_fps() -> None:
     }
 
 
+def test_dynamic_window_scales_for_web_but_not_run(monkeypatch) -> None:
+    dynamic_windows = []
+
+    class Predictor:
+        is_ready = True
+
+        def __init__(self, **kwargs):
+            dynamic_windows.append(kwargs["dynamic_window_frames"])
+
+    monkeypatch.setattr(cli_module, "SignPredictor", Predictor)
+    monkeypatch.setattr(cli_module, "StableTextBuffer", lambda **kwargs: object())
+    monkeypatch.setattr(cli_module, "GeminiTextPostProcessor", lambda **kwargs: object())
+    cfg = {"camera": {"fps": 30}, "features": {"dynamic_window_frames": 25}}
+
+    cli_module._create_run_components(
+        cfg,
+        "es",
+        frame_rate_hz=10,
+        create_speech=False,
+    )
+    cli_module._create_run_components(cfg, "es", create_speech=False)
+
+    assert dynamic_windows == [8, 25]
+
+
 class FakeTracker:
     def __init__(self, perceptions):
         self.perceptions = iter(perceptions)
@@ -281,6 +308,10 @@ class FakePredictor:
     def predict(self, landmarks, handedness="Right"):
         letter = next(self.letters)
         return SimpleNamespace(letter=letter, confidence=1.0)
+
+
+class UntrainedFakePredictor(FakePredictor):
+    is_ready = False
 
 
 class FakeGemini:
@@ -407,7 +438,35 @@ def test_recognition_session_reports_unrecognized_after_empty_hands_down() -> No
         now[0] = timestamp
         session.process_jpeg(jpeg_frame())
 
-    assert events.count({"tipo": "no_reconocido"}) == 1
+    assert events.count({"tipo": "no_reconocido", "motivo": "sin_letras"}) == 1
+
+
+def test_recognition_session_reports_missing_model_after_empty_hands_down() -> None:
+    now = [0.0]
+    events = []
+    session = RecognitionSession(
+        {"camera": {"mirror_display": False}, "web": {"hands_down_seconds": 1.5}},
+        lang="es",
+        emit=events.append,
+        tracker=FakeTracker(
+            [perception(True), perception(False), perception(False), perception(False)]
+        ),
+        predictor=UntrainedFakePredictor([None, None, None, None]),
+        text_buffer=StableTextBuffer(
+            stability_frames=1,
+            release_frames=1,
+            confidence_threshold=0,
+        ),
+        gemini_proc=FakeGemini(),
+        speech_out=FakeSpeech(),
+        clock=lambda: now[0],
+    )
+
+    for timestamp in (0.0, 0.1, 1.6, 3.2):
+        now[0] = timestamp
+        session.process_jpeg(jpeg_frame())
+
+    assert events.count({"tipo": "no_reconocido", "motivo": "sin_modelo"}) == 1
 
 
 def test_recognition_session_speak_with_empty_buffer() -> None:
@@ -435,7 +494,7 @@ def test_recognition_session_speak_with_empty_buffer() -> None:
     )
     session.process_jpeg(jpeg_frame())
     session.process_jpeg(jpeg_frame())
-    assert {"tipo": "no_reconocido"} in events
+    assert {"tipo": "no_reconocido", "motivo": "sin_letras"} in events
 
 
 def test_recognition_session_ignores_speak_without_hands_seen() -> None:
