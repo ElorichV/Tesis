@@ -81,7 +81,8 @@ async function play(text) {
 }
 window.avatarPlay = play;
 window.avatarCamera = (x, y, z, tx, ty, tz) => { camera.position.set(x, y, z); controls.target.set(tx, ty, tz); controls.update(); renderer.render(scene, camera); };
-window.avatarDebug = () => ({ ready: !!signer, playing, clock, duration: timeline?.duration });
+window.avatarDebug = () => ({ ready: !!signer, playing, clock, duration: timeline?.duration,
+  clips: timeline?.clips.map(c => [c.t, c.label]) });
 window.avatarSeek = async (text, t) => {
   if (text !== null) { const res = await translate(text); timeline = buildTimeline(signer, res.secuencia); $('glossText').textContent = res.glosa; }
   playing = false; clock = t;

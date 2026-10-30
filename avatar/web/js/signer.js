@@ -23,6 +23,44 @@ const FINGER_BONES = ['thumb_01', 'thumb_02', 'thumb_03', 'meta_index', 'meta_mi
   ...['index', 'middle', 'ring', 'pinky'].flatMap(f => [`${f}_01`, `${f}_02`, `${f}_03`])];
 // Perfil de mínimo jerk (velocidad y aceleración nulas en los extremos): movimiento humano suave.
 const ease = t => t * t * t * (t * (6 * t - 15) + 10);
+const DEG = Math.PI / 180;
+// Límites anatómicos (grados): flexo-extensión y desviación radial/cubital de la muñeca,
+// pronación/supinación del antebrazo y giro residual tolerado en la muñeca.
+export const WRIST_LIMITS = { flex: 75, dev: 28, forearmTwist: 95, wristTwist: 12 };
+// Volúmenes de colisión del cuerpo (glTF, metros): las manos no pueden entrar en ellos.
+const BODY_VOLUMES = [
+  { c: V(0, 1.62, 0.012), r: V(0.088, 0.118, 0.108) },  // cabeza
+  { c: V(0, 1.48, 0.0), r: V(0.062, 0.07, 0.062) },     // cuello
+  { c: V(0, 1.28, 0.0), r: V(0.15, 0.15, 0.118) },      // pecho
+  { c: V(0, 1.07, 0.0), r: V(0.14, 0.15, 0.10) },       // abdomen
+];
+const HAND_MARGIN = 0.018;
+const clampAbs = (v, m) => Math.max(-m, Math.min(m, v));
+function axisAngle(q) {
+  const w = THREE.MathUtils.clamp(q.w, -1, 1);
+  const ang = 2 * Math.acos(Math.abs(w));
+  const sgn = w < 0 ? -1 : 1;
+  const s = Math.sqrt(Math.max(1e-12, 1 - w * w));
+  return V(q.x * sgn / s, q.y * sgn / s, q.z * sgn / s).multiplyScalar(ang);
+}
+function fromRotVec(r) {
+  const a = r.length();
+  return a < 1e-9 ? new THREE.Quaternion() : new THREE.Quaternion().setFromAxisAngle(r.clone().divideScalar(a), a);
+}
+// Empuja un punto fuera de los volúmenes del cuerpo; devuelve el desplazamiento aplicado.
+function pushOut(p, margin) {
+  const d = V(0, 0, 0);
+  for (const b of BODY_VOLUMES) {
+    const r = b.r.clone().addScalar(margin);
+    const q = p.clone().add(d).sub(b.c).divide(r);
+    const len = q.length();
+    if (len < 1 && len > 1e-6) {
+      const surf = b.c.clone().add(q.multiplyScalar(1 / len).multiply(r));
+      d.add(surf.sub(p.clone().add(d)));
+    }
+  }
+  return d;
+}
 
 function mirrorVec(v, side) { return side === 'L' ? V(-v.x, v.y, v.z) : v.clone(); }
 function mirrorQuat(q, side) { return side === 'L' ? new THREE.Quaternion(q.x, -q.y, -q.z, q.w) : q.clone(); }
@@ -49,6 +87,8 @@ export class Signer {
         a: p('upperarm').distanceTo(p('lowerarm')), b: p('lowerarm').distanceTo(p('hand')),
         restFinger: p('middle_01').clone().sub(p('hand')).normalize(),
         restPalm: V(0, -1, 0),
+        palmOffset: p('middle_01').clone().sub(p('hand')).multiplyScalar(0.55),
+        tipOffset: this.rest[`middle_03_${s}`].pos.clone().sub(p('hand')).multiplyScalar(1.08),
         palmContact: toLocal(p('middle_01').clone().lerp(p('hand'), 0.25).add(V(0, -0.025, 0))),
         tipContact: toLocal(this.rest[`index_03_${s}`].pos.clone().add(
           p('index_03').clone().sub(p('index_02')).normalize().multiplyScalar(0.02))),
@@ -71,6 +111,12 @@ export class Signer {
         }
         this.shapeQuats[name][s] = out;
       }
+    }
+    for (const s of ['R', 'L']) {
+      const twInv = this.rest[`lowerarm_twist_${s}`].world.clone().invert();
+      const n = this.arms[s].restPalm.clone().applyQuaternion(twInv);
+      n.y = 0;
+      this.arms[s].palmLocal = n.normalize();
     }
     this.state = { R: this.restPose('R'), L: this.restPose('L') };
   }
@@ -158,19 +204,46 @@ export class Signer {
     aimBone(arm.upper, S, elbow, wrist.clone().sub(elbow));
     aimBone(arm.lower, elbow, wrist, null);
 
-    // Muñeca: reparte el giro (pronación/supinación) entre el hueso de torsión y la mano.
+    // Muñeca: la pronación/supinación va al hueso de torsión del antebrazo (limitada); la mano sólo
+    // conserva flexión/desviación dentro de rangos anatómicos y un giro residual mínimo.
+    const restHand = this.rest[arm.hand.name].local;
     const desired = handDelta.clone().multiply(this.rest[arm.hand.name].world);
     arm.twist.quaternion.copy(this.rest[arm.twist.name].local);
     arm.twist.updateMatrixWorld(true);
     const twistW = arm.twist.getWorldQuaternion(new THREE.Quaternion());
-    const X = twistW.clone().invert().multiply(desired).multiply(this.rest[arm.hand.name].local.clone().invert());
-    const tw = new THREE.Quaternion(0, X.y, 0, X.w).normalize();
-    const half = new THREE.Quaternion().slerp(tw, 0.6);
-    arm.twist.quaternion.multiply(half);
+    const X = twistW.clone().invert().multiply(desired).multiply(restHand.clone().invert());
+    const twFull = new THREE.Quaternion(0, X.y, 0, X.w).normalize();
+    const swing = X.clone().multiply(twFull.clone().invert());
+    let theta = 2 * Math.atan2(twFull.y, twFull.w);
+    theta = Math.atan2(Math.sin(theta), Math.cos(theta));
+    const L = WRIST_LIMITS;
+    const tBone = clampAbs(theta, L.forearmTwist * DEG);
+    const tRes = clampAbs(theta - tBone, L.wristTwist * DEG);
+    const yAx = V(0, 1, 0);
+    const n = arm.palmLocal;
+    const fAx = yAx.clone().cross(n).normalize();
+    const r = axisAngle(swing);
+    const flex = clampAbs(r.dot(fAx), L.flex * DEG);
+    const dev = clampAbs(r.dot(n), L.dev * DEG);
+    const swingC = fromRotVec(fAx.clone().multiplyScalar(flex).add(n.clone().multiplyScalar(dev)));
+    const qBone = new THREE.Quaternion().setFromAxisAngle(yAx, tBone);
+    const qRes = new THREE.Quaternion().setFromAxisAngle(yAx, tRes);
+    arm.twist.quaternion.multiply(qBone);
     arm.twist.updateMatrixWorld(true);
-    const tW2 = arm.twist.getWorldQuaternion(new THREE.Quaternion());
-    arm.hand.quaternion.copy(tW2.invert().multiply(desired));
+    arm.hand.quaternion.copy(qBone.clone().invert().multiply(swingC).multiply(qBone).multiply(qRes).multiply(restHand));
     arm.hand.updateMatrixWorld(true);
+  }
+
+  // Corrige la posición de la muñeca para que palma y yemas no atraviesen el cuerpo.
+  avoidBody(side, pose) {
+    const arm = this.arms[side];
+    for (let k = 0; k < 2; k++) {
+      for (const off of [arm.palmOffset, arm.tipOffset]) {
+        const pt = pose.pos.clone().add(off.clone().applyQuaternion(pose.rot));
+        pose.pos.add(pushOut(pt, off === arm.palmOffset ? HAND_MARGIN : 0.008));
+      }
+    }
+    return pose;
   }
 
   applyFingers(side, shapeA, shapeB, t) {
@@ -231,7 +304,8 @@ function movementOffset(mov, u, side) {
 export function buildTimeline(signer, sequence) {
   const clips = [];
   let t = 0.3;
-  const TRANS = 0.35;
+  const TRANS = 0.45; // transición entre señas
+  const HOLD = 0.3;   // pausa en la pose final para que cada seña se lea con claridad
   const push = (label, frames, useTrained = false) => {
     // frames: [{t, R, L}] con t relativo
     const start = t + TRANS;
@@ -239,7 +313,7 @@ export function buildTimeline(signer, sequence) {
       clips.push({ t: start + f.t, label, R: signer.poseFor('R', f.R, useTrained), L: f.L ? signer.poseFor('L', f.L) : null,
                    movR: f.R?.mov, movL: f.L?.mov });
     }
-    t = start + frames[frames.length - 1].t + 0.15;
+    t = start + frames[frames.length - 1].t + HOLD;
   };
   for (const item of sequence) {
     if (item.tipo === 'sena') {
@@ -247,11 +321,11 @@ export function buildTimeline(signer, sequence) {
     } else {
       for (const L of item.letras) {
         const h = { shape: L.shape, loc: 'deletreo', palma: L.palma, dedos: L.dedos };
-        const dur = L.mov ? 0.6 : 0.35;
+        const dur = L.mov ? 0.65 : 0.42;
         const frames = [{ t: 0, R: h }, { t: dur, R: { ...h, mov: L.mov } }];
         const before = t;
         push(`${item.glosa} · ${L.letra}`, frames, L.usar_orientacion_entrenada);
-        t = before + 0.22 + dur + 0.1; // deletreo más fluido
+        t = before + 0.3 + dur + 0.12; // deletreo fluido pero legible
       }
     }
   }
@@ -274,7 +348,19 @@ export function sampleTimeline(signer, tl, time) {
     if (next.mov && next !== prev) pos.add(movementOffset(next.mov, u, side));
     const rot = prev.p.rot.clone().slerp(next.p.rot, e);
     out[side] = { pos, rot, shape: prev.p.shape, shapeB: next.p.shape, shapeT: Math.min(1, e * 1.4) };
+    signer.avoidBody(side, out[side]);
     if (side === 'R') out.label = (u > 0.0 && next.label) ? next.label : prev.label;
+  }
+  // Separa las manos si llegaran a cruzarse una dentro de la otra.
+  const pR = out.R.pos.clone().add(signer.arms.R.palmOffset.clone().applyQuaternion(out.R.rot));
+  const pL = out.L.pos.clone().add(signer.arms.L.palmOffset.clone().applyQuaternion(out.L.rot));
+  const gap = pR.clone().sub(pL);
+  const MIN_GAP = 0.045;
+  if (gap.length() < MIN_GAP) {
+    const push = gap.lengthSq() > 1e-8 ? gap.normalize() : V(-1, 0, 0);
+    const k = (MIN_GAP - pR.distanceTo(pL)) / 2;
+    out.R.pos.add(push.clone().multiplyScalar(k));
+    out.L.pos.sub(push.multiplyScalar(k));
   }
   return out;
 }

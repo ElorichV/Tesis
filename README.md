@@ -149,7 +149,8 @@ Ejecutar la suite de pruebas (normalización invariante de landmarks, trayectori
 
 ## Avatar 3D en LSM (`avatar/`)
 
-Avatar de torso de una mujer (complexión media, piel morena media, cabello corto azul metálico) con
+Avatar de torso de una mujer en estilo anime hiperrealista (complexión media femenina, piel morena
+media, ojos grandes, bob corto en capas azul metálico con flequillo de lado) con
 brazos y manos rigueados que interpreta texto en español como Lengua de Señas Mexicana.
 
 - **Malla:** formas base → unión volumétrica (voxel remesh) → retopología 100 % quads (QuadriFlow) →
@@ -158,7 +159,13 @@ brazos y manos rigueados que interpreta texto en español como Lengua de Señas 
   vértice y normalizados; la blusa copia los pesos de la piel y la piel cubierta se elimina para
   evitar que atraviese la ropa. `tests/test_avatar.py` verifica influencias y huesos del GLB.
 - **Movimiento suave:** transiciones con perfil de mínimo jerk y un filtro críticamente amortiguado
-  por articulación (`Signer.applySmoothed`) que elimina saltos entre fotogramas clave.
+  por articulación (`Signer.applySmoothed`) que elimina saltos entre fotogramas clave; cada seña
+  mantiene una pausa (`HOLD`) para leerse con claridad.
+- **Muñecas naturales:** la pronación/supinación se descompone (swing-twist) y va al hueso de torsión
+  del antebrazo; la mano sólo conserva flexión/desviación dentro de `WRIST_LIMITS` (75°/28°, giro
+  residual 12°), así no gira de forma imposible.
+- **Sin interpenetraciones:** palma y yemas se empujan fuera de volúmenes de cabeza, cuello, pecho y
+  abdomen (`Signer.avoidBody`) y las dos manos mantienen una separación mínima.
 - **Aspecto:** materiales físicos (piel con *sheen*, cabello metálico con clearcoat, ojos húmedos) e
   iluminación de estudio con `RoomEnvironment`.
 

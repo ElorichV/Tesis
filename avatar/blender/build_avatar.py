@@ -39,7 +39,8 @@ LIP_SRGB = (0.62, 0.33, 0.33)
 BROW_SRGB = (0.09, 0.11, 0.20)
 METAL_SRGB = (0.86, 0.86, 0.88)
 
-HAND_SCALE = 0.93                   # Mano femenina adulta (~7 % menor que la masculina media)
+HAND_SCALE = 0.93
+EYE_R = 0.0150  # ojos grandes estilo anime                   # Mano femenina adulta (~7 % menor que la masculina media)
 
 FINGERS = ("index", "middle", "ring", "pinky")
 
@@ -288,13 +289,13 @@ def cut_and_relax(obj, predicate, relax=12):
 def torso_parts(B, pad=0.0):
     """Envolventes del torso femenino; `pad` infla las formas para generar la blusa."""
     P = pad
-    pelvis = ellipsoid_pts((0, 0.008, 0.985), (0.152 + P, 0.100 + P, 0.12 + P))
-    waist = ellipsoid_pts((0, 0.010, 1.125), (0.126 + P, 0.087 + P, 0.075 + P))
-    ribs = ellipsoid_pts((0, 0.0, 1.255), (0.140 + P, 0.093 + P, 0.09 + P))
-    upper = ellipsoid_pts((0, 0.006, 1.365), (0.146 + P, 0.082 + P, 0.06 + P))
-    traps = [ellipsoid_pts((0.072 * s, 0.014, 1.428), (0.062 + P, 0.048 + P, 0.03 + P)) for s in (-1, 1)]
-    delts = [sphere_pts(B[f"upperarm_{sd}"]["head"] + Vector((0, 0, -0.01)), 0.046 + P) for sd in ("R", "L")]
-    bust = [ellipsoid_pts((0.055 * s, -0.058, 1.272), (0.057 + P, 0.050 + P, 0.054 + P)) for s in (-1, 1)]
+    pelvis = ellipsoid_pts((0, 0.008, 0.950), (0.156 + P, 0.100 + P, 0.15 + P))
+    waist = ellipsoid_pts((0, 0.010, 1.125), (0.112 + P, 0.082 + P, 0.075 + P))
+    ribs = ellipsoid_pts((0, 0.0, 1.255), (0.132 + P, 0.090 + P, 0.09 + P))
+    upper = ellipsoid_pts((0, 0.006, 1.365), (0.138 + P, 0.080 + P, 0.06 + P))
+    traps = [ellipsoid_pts((0.068 * s, 0.014, 1.424), (0.056 + P, 0.044 + P, 0.026 + P)) for s in (-1, 1)]
+    delts = [sphere_pts(B[f"upperarm_{sd}"]["head"] + Vector((0, 0, -0.01)), 0.042 + P) for sd in ("R", "L")]
+    bust = [ellipsoid_pts((0.056 * s, -0.064, 1.282), (0.062 + P, 0.056 + P, 0.058 + P)) for s in (-1, 1)]
     return [hull_object("torso_low", [pelvis, waist]),
             hull_object("torso_mid", [waist, ribs]),
             hull_object("torso_up", [ribs, upper, *traps, *delts]),
@@ -312,9 +313,9 @@ def build_body(B):
         sh = B[f"upperarm_{side}"]["head"]
         el = B[f"upperarm_{side}"]["tail"]
         wr = B[f"lowerarm_twist_{side}"]["tail"]
-        parts.append(capsule(f"uarm_{side}", sh, el, 0.043, 0.035))
-        parts.append(hull_object(f"farm_{side}", [sphere_pts(el, 0.035),
-                                                   ellipsoid_pts(el.lerp(wr, 0.28), (0.040, 0.034, 0.031)),
+        parts.append(capsule(f"uarm_{side}", sh, el, 0.040, 0.032))
+        parts.append(hull_object(f"farm_{side}", [sphere_pts(el, 0.032),
+                                                   ellipsoid_pts(el.lerp(wr, 0.28), (0.036, 0.031, 0.029)),
                                                    ellipsoid_pts(wr, (0.012, 0.025, 0.017))]))
     body = join_objects(parts, "Body")
     return retopo(body, voxel=0.005, faces=12000, smooth_iters=8, smooth_factor=0.6)
@@ -332,48 +333,51 @@ def build_head(B):
     c = HEAD_C
     core = hull_object("head_core", [
         ellipsoid_pts(c + Vector((0, 0.010, 0.018)), (0.074, 0.093, 0.100)),
-        ellipsoid_pts(c + Vector((0, -0.026, -0.048)), (0.060, 0.058, 0.050)),
-        sphere_pts(c + Vector((0, -0.074, -0.083)), 0.018),
-        *[sphere_pts(c + Vector((0.046 * s, -0.060, 0.0)), 0.026) for s in (-1, 1)],
+        ellipsoid_pts(c + Vector((0, -0.024, -0.040)), (0.052, 0.054, 0.048)),
+        sphere_pts(c + Vector((0, -0.064, -0.079)), 0.013),
+        *[ellipsoid_pts(c + Vector((0.044 * s, -0.054, -0.012)), (0.026, 0.030, 0.030)) for s in (-1, 1)],
     ])
     bvh = BVHTree.FromObject(core, bpy.context.evaluated_depsgraph_get())
     details = []
 
     for s in (-1, 1):
-        surf = surface_point(bvh, 0.031 * s, c.z + 0.020)
-        ec = surf + Vector((0, 0.0065, 0))
-        details.append(("eye_white", hull_object(f"eye_{s}", [sphere_pts(ec, 0.0118)])))
-        details.append(("iris", hull_object(f"iris_{s}", [ellipsoid_pts(ec + Vector((0, -0.0106, 0)),
-                                                                          (0.0058, 0.0024, 0.0058))])))
-        details.append(("pupil", hull_object(f"pupil_{s}", [ellipsoid_pts(ec + Vector((0, -0.0119, 0)),
-                                                                            (0.0025, 0.0012, 0.0025))])))
-        lid = hull_object(f"lid_{s}", [sphere_pts(ec, 0.0127)])
+        surf = surface_point(bvh, 0.032 * s, c.z + 0.012)
+        er = EYE_R
+        ec = surf + Vector((0, er * 0.62, 0))
+        details.append(("eye_white", hull_object(f"eye_{s}", [ellipsoid_pts(ec, (er * 1.05, er, er))])))
+        details.append(("iris", hull_object(f"iris_{s}", [ellipsoid_pts(ec + Vector((0, -er * 0.9, -er * 0.03)),
+                                                                          (er * 0.58, er * 0.2, er * 0.68))])))
+        details.append(("pupil", hull_object(f"pupil_{s}", [ellipsoid_pts(ec + Vector((0, -er * 1.0, -er * 0.03)),
+                                                                            (er * 0.26, er * 0.1, er * 0.32))])))
+        details.append(("eye_white", hull_object(f"glint_{s}", [sphere_pts(ec + Vector((0.004 * s, -er * 1.02, er * 0.3)),
+                                                                            er * 0.12)])))
+        lid = hull_object(f"lid_{s}", [ellipsoid_pts(ec, (er * 1.12, er * 1.08, er * 1.08))])
         bm = bmesh.new()
         bm.from_mesh(lid.data)
-        bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < ec.z + 0.0032 or v.co.y > ec.y + 0.003],
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < ec.z + er * 0.42 or v.co.y > ec.y + 0.003],
                          context="VERTS")
         bm.to_mesh(lid.data)
         bm.free()
         details.append(("skin", lid))
-        details.append(("brow", hull_object(f"lash_{s}", [ellipsoid_pts(ec + Vector((0.0015 * s, -0.0085, 0.0062)),
-                                                                          (0.0115, 0.0045, 0.0011))])))
+        details.append(("brow", hull_object(f"lash_{s}", [ellipsoid_pts(ec + Vector((0.002 * s, -er * 0.55, er * 0.78)),
+                                                                          (er * 0.98, er * 0.30, er * 0.09))])))
         brow = []
         for k in range(5):
             x = (0.013 + 0.0085 * k) * s
-            z = c.z + 0.041 + 0.0065 * math.sin(math.pi * (k + 0.5) / 5.0)
+            z = c.z + 0.040 + 0.0055 * math.sin(math.pi * (k + 0.5) / 5.0)
             p = surface_point(bvh, x, z) + Vector((0, -0.0012, 0))
-            brow.append(sphere_pts(p, 0.0029 - 0.00025 * k))
+            brow.append(sphere_pts(p, 0.0021 - 0.00025 * k))
         details.append(("brow", hull_object(f"brow_{s}", brow)))
-    up = surface_point(bvh, 0.0, c.z - 0.043)
-    lo = surface_point(bvh, 0.0, c.z - 0.053)
-    details.append(("lip", hull_object("lip_up", [ellipsoid_pts(up + Vector((0, 0.0028, 0.0005)), (0.0195, 0.0055, 0.0045))])))
-    details.append(("lip", hull_object("lip_lo", [ellipsoid_pts(lo + Vector((0, 0.0026, 0)), (0.0175, 0.0060, 0.0052))])))
+    up = surface_point(bvh, 0.0, c.z - 0.041)
+    lo = surface_point(bvh, 0.0, c.z - 0.049)
+    details.append(("lip", hull_object("lip_up", [ellipsoid_pts(up + Vector((0, 0.0026, 0.0004)), (0.0145, 0.0045, 0.0034))])))
+    details.append(("lip", hull_object("lip_lo", [ellipsoid_pts(lo + Vector((0, 0.0024, 0)), (0.0125, 0.0052, 0.0042))])))
 
     nose_top = surface_point(bvh, 0.0, c.z + 0.018)
-    nose_tip = surface_point(bvh, 0.0, c.z - 0.016)
-    nose = hull_object("nose", [sphere_pts(nose_top + Vector((0, 0.002, 0)), 0.0055),
-                                sphere_pts(nose_tip + Vector((0, -0.010, 0)), 0.0088),
-                                *[sphere_pts(nose_tip + Vector((0.0095 * s, -0.004, -0.004)), 0.0062) for s in (-1, 1)]])
+    nose_tip = surface_point(bvh, 0.0, c.z - 0.018)
+    nose = hull_object("nose", [sphere_pts(nose_top + Vector((0, 0.003, 0)), 0.004),
+                                sphere_pts(nose_tip + Vector((0, -0.0065, 0.001)), 0.0052),
+                                *[sphere_pts(nose_tip + Vector((0.0062 * s, -0.002, -0.002)), 0.0036) for s in (-1, 1)]])
     ears = [hull_object(f"ear_{s}", [ellipsoid_pts(c + Vector((0.077 * s, 0.014, 0.0)), (0.010, 0.018, 0.027))])
             for s in (-1, 1)]
     head = join_objects([core, nose, *ears], "Head")
@@ -383,35 +387,59 @@ def build_head(B):
     return head, details
 
 
+def hair_strand(name, root, ctrl, tip, r0, r1, flat=0.38):
+    """Mechón afilado: curva de Bézier cuadrática con sección elíptica que se adelgaza a la punta."""
+    pts = []
+    for k in range(9):
+        t = k / 8.0
+        p = root * (1 - t) ** 2 + ctrl * 2 * t * (1 - t) + tip * t * t
+        r = r0 * (1 - t) + r1 * t
+        pts.append(ellipsoid_pts(p, (r, r * flat + 0.0008, r)))
+    return hull_object(name, pts)
+
+
 def build_hair():
-    """Corte corto tipo bob/pixie con flequillo de lado, azul metálico."""
+    """Corte corto en capas (bob asimétrico) con flequillo de lado en mechones, azul metálico."""
     c = HEAD_C
-    pieces = [
-        hull_object("hair_cap", [ellipsoid_pts(c + Vector((0, 0.012, 0.022)), (0.083, 0.103, 0.108)),
-                                 ellipsoid_pts(c + Vector((0, 0.022, 0.072)), (0.075, 0.085, 0.062))]),
-        hull_object("hair_fringe", [ellipsoid_pts(c + Vector((0.016, -0.064, 0.066)), (0.068, 0.040, 0.034)),
-                                    ellipsoid_pts(c + Vector((0.052, -0.050, 0.040)), (0.030, 0.034, 0.030))]),
-        hull_object("hair_nape", [ellipsoid_pts(c + Vector((0, 0.066, -0.030)), (0.072, 0.042, 0.058))]),
-        *[hull_object(f"hair_side_{s}", [ellipsoid_pts(c + Vector((0.072 * s, -0.004, 0.002)), (0.022, 0.060, 0.060))])
-          for s in (-1, 1)],
-    ]
+    pieces = [hull_object("hair_cap", [ellipsoid_pts(c + Vector((0, 0.010, 0.022)), (0.084, 0.104, 0.108)),
+                                       ellipsoid_pts(c + Vector((0, 0.020, 0.074)), (0.077, 0.088, 0.064))])]
+    # Flequillo barrido hacia un lado: mechones desde la coronilla que terminan sobre la frente.
+    for k in range(9):
+        u = k / 8.0
+        x0 = -0.050 + 0.085 * u
+        root = c + Vector((x0 * 0.6 - 0.012, -0.030, 0.105))
+        tip = c + Vector((x0 + 0.030 + 0.012 * u, -0.094 + 0.010 * abs(u - 0.4), 0.050 + 0.018 * (1 - u) ** 2))
+        ctrl = (root + tip) * 0.5 + Vector((0.006, -0.040, 0.012))
+        pieces.append(hair_strand(f"fringe_{k}", root, ctrl, tip, 0.016, 0.0022))
+    # Laterales hasta la mandíbula (más largo del lado del flequillo).
+    for s in (-1, 1):
+        for k in range(6):
+            a = math.radians(-35 + 22 * k)
+            yy = 0.090 * math.sin(a)
+            root = c + Vector((0.070 * s, yy, 0.062))
+            low = -0.072 if s > 0 else -0.058
+            tip = c + Vector((0.080 * s, yy - 0.012 + 0.006 * k, low + 0.010 * (k % 2)))
+            ctrl = c + Vector((0.098 * s, yy, 0.000))
+            pieces.append(hair_strand(f"side_{s}_{k}", root, ctrl, tip, 0.021, 0.004))
+    # Nuca en capas.
+    for k in range(9):
+        x = -0.064 + 0.016 * k
+        root = c + Vector((x * 0.8, 0.070, 0.070))
+        tip = c + Vector((x * 1.05, 0.084, -0.078 + 0.008 * (k % 2)))
+        ctrl = c + Vector((x * 1.1, 0.112, 0.000))
+        pieces.append(hair_strand(f"nape_{k}", root, ctrl, tip, 0.022, 0.004))
     hair = join_objects(pieces, "Hair")
-    retopo(hair, voxel=0.003, faces=6000, smooth_iters=6, smooth_factor=0.6, subdiv=0)
+    retopo(hair, voxel=0.0018, faces=16000, smooth_iters=6, smooth_factor=0.5, subdiv=0)
 
     def cut(co):
         p = co - c
-        face = p.y < -0.025 and p.z < 0.034 and abs(p.x) < 0.062
-        below = p.z < -0.075
-        sides = abs(p.x) > 0.045 and p.z < -0.032 and p.y < 0.035
-        sideburn = p.y < -0.035 and p.z < 0.0
-        return face or below or sides or sideburn
+        face = p.y < -0.025 and p.z < 0.030 and abs(p.x) < 0.060
+        sideburn = p.y < -0.040 and p.z < -0.005
+        return face or sideburn or p.z < -0.085
 
-    cut_and_relax(hair, cut)
+    cut_and_relax(hair, cut, relax=6)
     apply_modifier(hair, "SUBSURF", levels=1, render_levels=1)
-    tex = bpy.data.textures.new("hair_clumps", type="CLOUDS")
-    tex.noise_scale = 0.006
-    apply_modifier(hair, "DISPLACE", texture=tex, strength=0.0022, mid_level=0.5)
-    apply_modifier(hair, "SMOOTH", factor=0.5, iterations=2)
+    apply_modifier(hair, "SMOOTH", factor=0.5, iterations=3)
     set_smooth(hair)
     return hair
 
@@ -437,7 +465,7 @@ def build_shirt(B):
     for side in ("R", "L"):
         sh = B[f"upperarm_{side}"]["head"]
         el = B[f"upperarm_{side}"]["tail"]
-        parts.append(capsule(f"sleeve_{side}", sh, sh.lerp(el, 0.5), 0.043 + pad + 0.004, 0.039 + pad + 0.004))
+        parts.append(capsule(f"sleeve_{side}", sh, sh.lerp(el, 0.5), 0.040 + pad + 0.004, 0.036 + pad + 0.004))
     shirt = join_objects(parts, "Shirt")
     retopo(shirt, voxel=0.005, faces=6000, smooth_iters=6, smooth_factor=0.6, subdiv=0)
     sleeve_x = 0.163 + 0.265 * 0.5
@@ -693,7 +721,7 @@ def main(argv):
         "brow": make_material("Brow", BROW_SRGB, 0.6),
         "nail": make_material("Nail", NAIL_SRGB, 0.25),
         "eye_white": make_material("EyeWhite", (0.93, 0.92, 0.9), 0.15),
-        "iris": make_material("Iris", (0.24, 0.13, 0.06), 0.25),
+        "iris": make_material("Iris", (0.20, 0.30, 0.62), 0.25),
         "pupil": make_material("Pupil", (0.01, 0.01, 0.01), 0.1),
         "lip": make_material("Lip", LIP_SRGB, 0.4),
         "metal": make_material("Metal", METAL_SRGB, 0.18, metallic=1.0),
