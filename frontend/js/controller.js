@@ -217,7 +217,7 @@ export function createController(store, { stageVideo, cameraVideo, stageAvatar }
         updateMessage(id, {
           simple: res.texto_sencillo || undefined,
           animationUrl: res.animacion_url || undefined,
-          secuencia,
+          secuencia: avatarAvailable ? secuencia : undefined,
           animation: avatarAvailable || res.animacion_url ? 'ready' : 'unavailable',
         });
       }

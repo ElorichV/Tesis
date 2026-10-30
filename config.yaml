@@ -126,4 +126,5 @@ speech:
 
 web:
   port: 8000
+  frame_rate_hz: 10
   hands_down_seconds: 1.5

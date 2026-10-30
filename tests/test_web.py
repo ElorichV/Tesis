@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from io import BytesIO
 import json
+import socket
+import threading
 from types import SimpleNamespace
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
@@ -11,10 +13,13 @@ from urllib.request import Request, urlopen
 import cv2
 import numpy as np
 
+import app.web as web_module
+from app.cli import _text_buffer_frame_counts
 from app.web import (
     RecognitionSession,
     create_server,
     encode_websocket_frame,
+    jpeg_dimensions,
     read_websocket_frame,
     websocket_accept,
 )
@@ -32,6 +37,24 @@ def masked_client_frame(payload: bytes, opcode: int = 2) -> bytes:
     return header + mask + bytes(value ^ mask[index % 4] for index, value in enumerate(payload))
 
 
+def raw_http_response(port: int, request: bytes) -> tuple[str, dict[str, str], bytes]:
+    with socket.create_connection(("127.0.0.1", port), timeout=3) as connection:
+        connection.settimeout(3)
+        connection.sendall(request)
+        reader = connection.makefile("rb")
+        status = reader.readline().decode("iso-8859-1").rstrip()
+        headers = {}
+        while True:
+            line = reader.readline()
+            if line in (b"\r\n", b"\n", b""):
+                break
+            name, value = line.decode("iso-8859-1").split(":", 1)
+            headers[name.lower()] = value.strip()
+        body = reader.read(int(headers.get("content-length", "0")))
+        reader.close()
+    return status, headers, body
+
+
 def test_websocket_frames_and_rfc_handshake() -> None:
     payload = b"mensaje del navegador"
     fin, opcode, decoded = read_websocket_frame(BytesIO(masked_client_frame(payload, opcode=2)))
@@ -45,8 +68,6 @@ def test_websocket_frames_and_rfc_handshake() -> None:
 
 def test_unified_http_routes() -> None:
     server = create_server(port=0)
-    import threading
-
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     base = f"http://127.0.0.1:{server.server_port}"
@@ -56,6 +77,7 @@ def test_unified_http_routes() -> None:
             assert response.status == 200
             assert "AULA_CONFIG" in index
             assert "DEMO_MODE:false" in index
+            assert "FRAME_INTERVAL_MS:100" in index
 
         with urlopen(base + "/avatar/js/viewer.js") as response:
             assert response.status == 200
@@ -93,11 +115,157 @@ def test_unified_http_routes() -> None:
         thread.join(timeout=2)
 
 
+def test_translate_text_truncates_after_stripping_and_caps_request_body(monkeypatch) -> None:
+    translated_texts = []
+    monkeypatch.setattr(
+        web_module,
+        "translate_text",
+        lambda lexicon, text: (
+            translated_texts.append(text) or {"glosa": "HOLA", "secuencia": []}
+        ),
+    )
+    server = create_server(port=0, no_voice=True)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    base = f"http://127.0.0.1:{server.server_port}"
+    try:
+        raw_text = f" {('hola' * 130)} "
+        expected = raw_text.strip()[:500]
+        request = Request(
+            base + "/traducir-texto",
+            data=json.dumps({"texto": raw_text}).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urlopen(request) as response:
+            translated = json.loads(response.read())
+        assert translated["texto_sencillo"] == expected
+        assert translated_texts == [expected]
+
+        request_bytes = (
+            f"POST /traducir-texto HTTP/1.1\r\n"
+            f"Host: 127.0.0.1:{server.server_port}\r\n"
+            "Content-Type: application/json\r\n"
+            "Content-Length: 65537\r\n\r\n"
+        ).encode("ascii")
+        status, _, body = raw_http_response(server.server_port, request_bytes)
+        assert status.startswith("HTTP/1.1 413")
+        assert json.loads(body)["error"]
+
+        for content_length in ("invalid", "-1"):
+            request_bytes = (
+                f"POST /traducir-texto HTTP/1.1\r\n"
+                f"Host: 127.0.0.1:{server.server_port}\r\n"
+                "Content-Type: application/json\r\n"
+                f"Content-Length: {content_length}\r\n\r\n"
+            ).encode("ascii")
+            status, _, body = raw_http_response(server.server_port, request_bytes)
+            assert status.startswith("HTTP/1.1 400")
+            assert json.loads(body)["error"]
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_websocket_origin_check_and_shared_speech(monkeypatch) -> None:
+    shared_speech = FakeSpeech()
+    speech_creations = []
+    session_speech = []
+    monkeypatch.setattr(
+        web_module,
+        "_create_speech_output",
+        lambda cfg, target_lang, async_playback=True: (
+            speech_creations.append((target_lang, async_playback)) or shared_speech
+        ),
+    )
+
+    class CapturingSession:
+        def __init__(self, *args, speech_out=None, **kwargs):
+            session_speech.append(speech_out)
+
+        def process_jpeg(self, jpeg):
+            pass
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(web_module, "RecognitionSession", CapturingSession)
+    server = create_server(port=0)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    port = server.server_port
+
+    def connect(origin: str):
+        connection = socket.create_connection(("127.0.0.1", port), timeout=3)
+        connection.settimeout(3)
+        connection.sendall(
+            (
+                "GET /reconocer HTTP/1.1\r\n"
+                f"Host: 127.0.0.1:{port}\r\n"
+                "Upgrade: websocket\r\n"
+                "Connection: Upgrade\r\n"
+                "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n"
+                "Sec-WebSocket-Version: 13\r\n"
+                f"Origin: {origin}\r\n\r\n"
+            ).encode("ascii")
+        )
+        reader = connection.makefile("rb")
+        status = reader.readline().decode("ascii").strip()
+        while reader.readline() not in (b"\r\n", b"\n", b""):
+            pass
+        return connection, reader, status
+
+    try:
+        connection, reader, status = connect(f"http://other.example:{port}")
+        assert status.startswith("HTTP/1.1 403")
+        reader.close()
+        connection.close()
+
+        for _ in range(2):
+            connection, reader, status = connect(f"http://127.0.0.1:{port}")
+            assert status.startswith("HTTP/1.1 101")
+            connection.sendall(masked_client_frame(b"", opcode=0x8))
+            assert reader.read(2) == b"\x88\x00"
+            reader.close()
+            connection.close()
+
+        assert speech_creations == [("es", True)]
+        assert session_speech == [shared_speech, shared_speech]
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def test_web_frame_thresholds_scale_from_camera_fps() -> None:
+    cfg = {
+        "camera": {"fps": 30},
+        "text": {
+            "stability_frames": 12,
+            "release_frames": 4,
+            "control_gesture_hold_frames": 20,
+        },
+    }
+    assert _text_buffer_frame_counts(cfg, frame_rate_hz=10) == {
+        "stability_frames": 4,
+        "release_frames": 1,
+        "control_gesture_hold_frames": 7,
+    }
+    assert _text_buffer_frame_counts(cfg, frame_rate_hz=30) == {
+        "stability_frames": 12,
+        "release_frames": 4,
+        "control_gesture_hold_frames": 20,
+    }
+
+
 class FakeTracker:
     def __init__(self, perceptions):
         self.perceptions = iter(perceptions)
+        self.calls = 0
 
     def process_frame(self, frame, timestamp_ms):
+        self.calls += 1
         return next(self.perceptions)
 
     def close(self):
@@ -147,6 +315,40 @@ def jpeg_frame(value: int = 100) -> bytes:
     ok, encoded = cv2.imencode(".jpg", np.full((32, 32, 3), value, dtype=np.uint8))
     assert ok
     return encoded.tobytes()
+
+
+def test_jpeg_dimensions_and_oversized_frame_skip(monkeypatch) -> None:
+    encoded = jpeg_frame()
+    assert jpeg_dimensions(encoded) == (32, 32)
+    assert jpeg_dimensions(b"not a jpeg") is None
+
+    oversized = (
+        b"\xff\xd8\xff\xc0\x00\x08\x08"
+        + (1081).to_bytes(2, "big")
+        + (1920).to_bytes(2, "big")
+        + b"\x01"
+    )
+    assert jpeg_dimensions(oversized) == (1081, 1920)
+
+    tracker = FakeTracker([])
+    session = RecognitionSession(
+        {"camera": {"mirror_display": False}},
+        lang="es",
+        tracker=tracker,
+        predictor=FakePredictor([]),
+        text_buffer=StableTextBuffer(),
+        gemini_proc=FakeGemini(),
+        speech_out=FakeSpeech(),
+    )
+    decode_calls = []
+    monkeypatch.setattr(
+        web_module.cv2,
+        "imdecode",
+        lambda *args, **kwargs: decode_calls.append(args) or None,
+    )
+    session.process_jpeg(oversized)
+    assert tracker.calls == 0
+    assert decode_calls == []
 
 
 def test_recognition_session_finalizes_after_hands_down() -> None:

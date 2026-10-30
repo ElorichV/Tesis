@@ -18,7 +18,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 import cv2
 import numpy as np
 
-from app.cli import _create_run_components, _create_tracker
+from app.cli import _create_run_components, _create_speech_output, _create_tracker
 from app.config import get_alphabet_spec, load_config
 from avatar.lexicon import Lexicon
 from avatar.server import ensure_handshape_library, list_lexicon, translate_text
@@ -26,7 +26,8 @@ from avatar.server import ensure_handshape_library, list_lexicon, translate_text
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 AVATAR_WEB_DIR = Path(__file__).resolve().parent.parent / "avatar" / "web"
 WEBSOCKET_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-MAX_WEBSOCKET_MESSAGE = 16 * 1024 * 1024
+MAX_WEBSOCKET_MESSAGE = 2 * 1024 * 1024
+MAX_JPEG_PIXELS = 1920 * 1080
 LOGGER = logging.getLogger(__name__)
 _warning_lock = threading.Lock()
 _untrained_warning_emitted = False
@@ -116,6 +117,40 @@ def read_websocket_message(stream, send_frame: Callable[[bytes, int], None]) -> 
             raise ValueError(f"Opcode WebSocket no soportado: {opcode}.")
 
 
+def jpeg_dimensions(data: bytes) -> tuple[int, int] | None:
+    """Devuelve (alto, ancho) desde el primer marcador JPEG SOF válido."""
+    if len(data) < 4 or data[:2] != b"\xff\xd8":
+        return None
+
+    index = 2
+    while index < len(data):
+        if data[index] != 0xFF:
+            return None
+        while index < len(data) and data[index] == 0xFF:
+            index += 1
+        if index >= len(data):
+            return None
+        marker = data[index]
+        index += 1
+
+        if marker in (0xD8, 0xD9, 0x01) or 0xD0 <= marker <= 0xD7:
+            continue
+        if marker == 0xDA or index + 2 > len(data):
+            return None
+
+        segment_length = int.from_bytes(data[index:index + 2], "big")
+        if segment_length < 2 or index + segment_length > len(data):
+            return None
+        if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+            if segment_length < 7:
+                return None
+            height = int.from_bytes(data[index + 3:index + 5], "big")
+            width = int.from_bytes(data[index + 5:index + 7], "big")
+            return (height, width) if height and width else None
+        index += segment_length
+    return None
+
+
 class RecognitionSession:
     """Pipeline aislado de reconocimiento para una conexión WebSocket."""
 
@@ -134,6 +169,8 @@ class RecognitionSession:
         clock: Callable[[], float] = time.monotonic,
         hands_down_seconds: float | None = None,
     ) -> None:
+        if not no_voice and speech_out is None:
+            raise ValueError("RecognitionSession requiere SpeechOutput compartido o no_voice=True.")
         self.cfg = cfg
         self.lang = lang
         self.no_voice = no_voice
@@ -144,14 +181,20 @@ class RecognitionSession:
         self.text_buffer = text_buffer
         self.gemini_proc = gemini_proc
         self.speech_out = speech_out
-        if any(value is None for value in (predictor, text_buffer, gemini_proc, speech_out)):
+        web_cfg = cfg.get("web", {})
+        frame_rate_hz = float(web_cfg.get("frame_rate_hz", 10))
+        if any(value is None for value in (predictor, text_buffer, gemini_proc)):
             components = _create_run_components(
-                cfg, lang, async_playback=True, warn_untrained=False
+                cfg,
+                lang,
+                async_playback=True,
+                warn_untrained=False,
+                frame_rate_hz=frame_rate_hz,
+                create_speech=False,
             )
-            self.predictor = predictor or components[0]
-            self.text_buffer = text_buffer or components[1]
-            self.gemini_proc = gemini_proc or components[2]
-            self.speech_out = speech_out or components[3]
+            self.predictor = predictor if predictor is not None else components[0]
+            self.text_buffer = text_buffer if text_buffer is not None else components[1]
+            self.gemini_proc = gemini_proc if gemini_proc is not None else components[2]
 
         global _untrained_warning_emitted
         with _warning_lock:
@@ -163,7 +206,6 @@ class RecognitionSession:
                 )
                 _untrained_warning_emitted = True
 
-        web_cfg = cfg.get("web", {})
         self.hands_down_seconds = (
             float(hands_down_seconds)
             if hands_down_seconds is not None
@@ -175,6 +217,7 @@ class RecognitionSession:
         self.last_no_hand_at: float | None = None
         self.hands_detected = False
         self.hands_seen_since_final = False
+        self.jpeg_warning_emitted = False
         self.last_buffer_text = self.text_buffer.text
         self.last_quality: tuple[bool, bool] | None = None
         self.last_quality_at: float | None = None
@@ -182,13 +225,31 @@ class RecognitionSession:
     def _emit(self, tipo: str, **fields: Any) -> None:
         self.emit({"tipo": tipo, **fields})
 
+    def _warn_invalid_jpeg(self) -> None:
+        if not self.jpeg_warning_emitted:
+            LOGGER.warning("Se omite un frame JPEG inválido o con resolución excesiva.")
+            self.jpeg_warning_emitted = True
+
     def process_jpeg(self, jpeg: bytes) -> None:
         """Decodifica y procesa una imagen JPEG recibida del navegador."""
         try:
+            dimensions = jpeg_dimensions(jpeg)
+            if (
+                len(jpeg) > MAX_WEBSOCKET_MESSAGE
+                or dimensions is None
+                or dimensions[0] * dimensions[1] > MAX_JPEG_PIXELS
+            ):
+                self._warn_invalid_jpeg()
+                return
             encoded = np.frombuffer(jpeg, dtype=np.uint8)
-            frame = cv2.imdecode(encoded, cv2.IMREAD_COLOR)
+            try:
+                frame = cv2.imdecode(encoded, cv2.IMREAD_COLOR)
+            except Exception:
+                self._warn_invalid_jpeg()
+                return
             if frame is None:
-                raise ValueError("El mensaje binario no contiene un JPEG válido.")
+                self._warn_invalid_jpeg()
+                return
             if self.mirror_frames:
                 frame = cv2.flip(frame, 1)
             now = self.clock()
@@ -276,6 +337,8 @@ class UnifiedWebHandler(SimpleHTTPRequestHandler):
     lang: str
     no_voice: bool
     alphabet: str
+    speech_out: Any | None
+    frame_interval_ms: int
 
     extensions_map = {
         **SimpleHTTPRequestHandler.extensions_map,
@@ -308,6 +371,9 @@ class UnifiedWebHandler(SimpleHTTPRequestHandler):
         needle = b'<script type="module" src="js/main.js"></script>'
         injection = (
             b"<script>window.AULA_CONFIG={DEMO_MODE:false,API_URL:'',"
+            b"FRAME_INTERVAL_MS:"
+            + str(self.frame_interval_ms).encode("ascii")
+            + b","
             b"RECOGNITION_WS_URL:(location.protocol==='https:'?'wss://':'ws://')"
             b"+location.host+'/reconocer'};</script>"
         )
@@ -339,19 +405,33 @@ class UnifiedWebHandler(SimpleHTTPRequestHandler):
             self.send_error(404)
             return
         try:
-            length = int(self.headers.get("Content-Length", "0"))
+            raw_length = self.headers.get("Content-Length")
+            if raw_length is None:
+                raise ValueError("Falta Content-Length.")
+            length = int(raw_length)
+            if length < 0:
+                raise ValueError("Content-Length negativo.")
+        except (ValueError, TypeError):
+            self._send_json({"error": "Content-Length inválido."}, 400)
+            return
+        if length > 64 * 1024:
+            self._send_json({"error": "El cuerpo de la solicitud excede 64 KiB."}, 413)
+            return
+
+        try:
             request = json.loads(self.rfile.read(length))
             text = request.get("texto") if isinstance(request, dict) else None
             if not isinstance(text, str) or not text.strip():
                 raise ValueError("El texto debe ser una cadena no vacía.")
+            text = text.strip()[:500]
         except (ValueError, TypeError, json.JSONDecodeError, UnicodeDecodeError):
             self._send_json({"error": "JSON inválido o texto vacío."}, 400)
             return
 
-        result = translate_text(self.lexicon, text[:500])
+        result = translate_text(self.lexicon, text)
         self._send_json(
             {
-                "texto_sencillo": text.strip(),
+                "texto_sencillo": text,
                 "glosa": result["glosa"],
                 "secuencia": result["secuencia"],
                 "animacion_url": None,
@@ -363,6 +443,10 @@ class UnifiedWebHandler(SimpleHTTPRequestHandler):
         self.wfile.flush()
 
     def _serve_websocket(self) -> None:
+        origin = self.headers.get("Origin")
+        if origin is not None and urlparse(origin).netloc != self.headers.get("Host"):
+            self.send_error(403, "Origin no coincide con Host.")
+            return
         if self.headers.get("Upgrade", "").lower() != "websocket":
             self.send_error(426, "Se requiere una conexión WebSocket.")
             return
@@ -385,6 +469,7 @@ class UnifiedWebHandler(SimpleHTTPRequestHandler):
                 self.config,
                 lang=self.lang,
                 no_voice=self.no_voice,
+                speech_out=self.speech_out,
                 emit=lambda event: self._send_ws_frame(
                     json.dumps(event, ensure_ascii=False).encode("utf-8"), 0x1
                 ),
@@ -428,6 +513,12 @@ def create_server(
     lex = lexicon or Lexicon.load()
     spec = get_alphabet_spec(cfg, alphabet)
     language = lang or cfg.get("speech", {}).get("language", "es")
+    frame_rate_hz = float(cfg.get("web", {}).get("frame_rate_hz", 10))
+    if frame_rate_hz <= 0:
+        raise ValueError("web.frame_rate_hz debe ser mayor que cero.")
+    shared_speech = (
+        None if no_voice else _create_speech_output(cfg, language, async_playback=True)
+    )
     configured_handler = type(
         "ConfiguredUnifiedWebHandler",
         (UnifiedWebHandler,),
@@ -437,6 +528,8 @@ def create_server(
             "lang": language,
             "no_voice": no_voice,
             "alphabet": spec["code"],
+            "speech_out": shared_speech,
+            "frame_interval_ms": round(1000 / frame_rate_hz),
         },
     )
     handler = partial(configured_handler, directory=str(FRONTEND_DIR))
