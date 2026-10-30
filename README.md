@@ -149,8 +149,18 @@ Ejecutar la suite de pruebas (normalización invariante de landmarks, trayectori
 
 ## Avatar 3D en LSM (`avatar/`)
 
-Avatar de torso humano (complexión media, piel morena media) con brazos y manos rigueados que
-interpreta texto en español como Lengua de Señas Mexicana.
+Avatar de torso de una mujer (complexión media, piel morena media, cabello corto azul metálico) con
+brazos y manos rigueados que interpreta texto en español como Lengua de Señas Mexicana.
+
+- **Malla:** formas base → unión volumétrica (voxel remesh) → retopología 100 % quads (QuadriFlow) →
+  subdivisión Catmull-Clark; ~139 k caras. Cortes de ropa y cabello con bordes relajados.
+- **Pesos sin deformaciones:** bone heat + suavizado laplaciano sobre aristas, máx. 4 influencias por
+  vértice y normalizados; la blusa copia los pesos de la piel y la piel cubierta se elimina para
+  evitar que atraviese la ropa. `tests/test_avatar.py` verifica influencias y huesos del GLB.
+- **Movimiento suave:** transiciones con perfil de mínimo jerk y un filtro críticamente amortiguado
+  por articulación (`Signer.applySmoothed`) que elimina saltos entre fotogramas clave.
+- **Aspecto:** materiales físicos (piel con *sheen*, cabello metálico con clearcoat, ojos húmedos) e
+  iluminación de estudio con `RoomEnvironment`.
 
 ```bash
 python -m app avatar            # visor en http://127.0.0.1:8765 (también: python -m avatar.server)

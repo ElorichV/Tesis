@@ -21,7 +21,8 @@ const DIRS = {
 const POINTING_SHAPES = new Set(['1', 'LSM_D', 'LSM_X', 'LSM_G', 'LSM_L', 'LSM_I', 'LSM_J', 'pinza', 'LSM_Z']);
 const FINGER_BONES = ['thumb_01', 'thumb_02', 'thumb_03', 'meta_index', 'meta_middle', 'meta_ring', 'meta_pinky',
   ...['index', 'middle', 'ring', 'pinky'].flatMap(f => [`${f}_01`, `${f}_02`, `${f}_03`])];
-const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+// Perfil de mínimo jerk (velocidad y aceleración nulas en los extremos): movimiento humano suave.
+const ease = t => t * t * t * (t * (6 * t - 15) + 10);
 
 function mirrorVec(v, side) { return side === 'L' ? V(-v.x, v.y, v.z) : v.clone(); }
 function mirrorQuat(q, side) { return side === 'L' ? new THREE.Quaternion(q.x, -q.y, -q.z, q.w) : q.clone(); }
@@ -180,6 +181,21 @@ export class Signer {
       tmp.slerpQuaternions(qa[full], qb[full] || qa[full], t);
       this.bones[full].quaternion.copy(this.rest[full].local).multiply(tmp);
     }
+  }
+
+  // Igual que apply(), pero cada articulación sigue a su objetivo con un filtro críticamente
+  // amortiguado (independiente de los FPS): sin saltos ni temblores entre fotogramas clave.
+  applySmoothed(poses, dt, tau = 0.075) {
+    if (!this.smoothBones) {
+      this.smoothBones = Object.keys(this.bones).filter(n => /_(R|L)$/.test(n));
+    }
+    const prev = this.prevQ;
+    this.apply(poses);
+    if (prev) {
+      const a = 1 - Math.exp(-dt / tau);
+      for (const n of this.smoothBones) this.bones[n].quaternion.copy(prev[n].slerp(this.bones[n].quaternion, a));
+    }
+    this.prevQ = Object.fromEntries(this.smoothBones.map(n => [n, this.bones[n].quaternion.clone()]));
   }
 
   apply(poses) {

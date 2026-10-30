@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { Signer, buildTimeline, sampleTimeline } from './signer.js';
 
 const $ = id => document.getElementById(id);
@@ -12,16 +13,21 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.shadowMap.enabled = true;
 container.appendChild(renderer.domElement);
 
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x2b3038);
+scene.background = new THREE.Color(0x23272f);
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.55;
 const camera = new THREE.PerspectiveCamera(30, 1, 0.05, 20);
 camera.position.set(0, 1.42, 1.9);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0, 1.38, 0);
 controls.enableDamping = true;
 
-scene.add(new THREE.HemisphereLight(0xfff4e8, 0x40464f, 1.1));
-const key = new THREE.DirectionalLight(0xffffff, 2.2);
+scene.add(new THREE.HemisphereLight(0xfff4e8, 0x40464f, 0.55));
+const key = new THREE.DirectionalLight(0xfff1e6, 2.0);
 key.position.set(1.2, 2.4, 2.0);
 key.castShadow = true;
 key.shadow.bias = -0.0004;
@@ -29,7 +35,10 @@ key.shadow.normalBias = 0.02;
 key.shadow.mapSize.set(2048, 2048);
 key.shadow.camera.left = -1; key.shadow.camera.right = 1; key.shadow.camera.top = 1; key.shadow.camera.bottom = -1;
 scene.add(key);
-const rim = new THREE.DirectionalLight(0x9ec1ff, 1.0);
+const fill = new THREE.DirectionalLight(0xdfe8ff, 0.6);
+fill.position.set(-1.6, 1.6, 1.4);
+scene.add(fill);
+const rim = new THREE.DirectionalLight(0x9ec1ff, 1.3);
 rim.position.set(-1.5, 2.0, -1.5);
 scene.add(rim);
 
@@ -41,6 +50,20 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 resize();
+
+// Aspecto físico por material: piel con brillo de terciopelo, cabello metálico anisotrópico, ojos húmedos.
+const MATERIAL_LOOK = {
+  Skin: { roughness: 0.52, sheen: 0.35, sheenRoughness: 0.55, sheenColor: new THREE.Color(0xffb59a), clearcoat: 0.04, clearcoatRoughness: 0.6 },
+  Hair: { color: new THREE.Color(0x2a5bc4), metalness: 0.6, roughness: 0.34, clearcoat: 0.35, clearcoatRoughness: 0.3, envMapIntensity: 0.7 },
+  Lip: { roughness: 0.36, clearcoat: 0.35, clearcoatRoughness: 0.3, sheen: 0.2, sheenColor: new THREE.Color(0xff9a9a) },
+  EyeWhite: { roughness: 0.12, clearcoat: 1.0, clearcoatRoughness: 0.02 },
+  Iris: { roughness: 0.2, clearcoat: 1.0, clearcoatRoughness: 0.02 },
+  Pupil: { roughness: 0.1, clearcoat: 1.0, clearcoatRoughness: 0.02 },
+  Nail: { roughness: 0.22, clearcoat: 0.8, clearcoatRoughness: 0.1 },
+  Shirt: { roughness: 0.9, sheen: 0.6, sheenRoughness: 0.8, sheenColor: new THREE.Color(0x46506a) },
+  Metal: { metalness: 1.0, roughness: 0.15 },
+  Brow: { roughness: 0.65 },
+};
 
 let signer = null, timeline = null, clock = 0, speed = 1, playing = false, chest = null;
 
@@ -62,7 +85,7 @@ window.avatarDebug = () => ({ ready: !!signer, playing, clock, duration: timelin
 window.avatarSeek = async (text, t) => {
   if (text !== null) { const res = await translate(text); timeline = buildTimeline(signer, res.secuencia); $('glossText').textContent = res.glosa; }
   playing = false; clock = t;
-  const poses = sampleTimeline(signer, timeline, t); signer.apply(poses);
+  const poses = sampleTimeline(signer, timeline, t); signer.prevQ = null; signer.apply(poses);
   $('currentText').textContent = poses.label || '—';
   renderer.render(scene, camera);
   return poses.label;
@@ -88,7 +111,16 @@ async function init() {
     fetch('assets/handshapes.json').then(r => r.json()),
     fetch('/api/lexicon').then(r => r.json()).catch(() => []),
   ]);
-  gltf.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
+  gltf.scene.traverse(o => {
+    if (!o.isMesh) return;
+    o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false;
+    const look = MATERIAL_LOOK[o.material.name];
+    if (look) {
+      const m = new THREE.MeshPhysicalMaterial({ color: o.material.color, side: o.material.name === 'Shirt' ? THREE.DoubleSide : THREE.FrontSide, ...look });
+      m.name = o.material.name;
+      o.material = m;
+    }
+  });
   scene.add(gltf.scene);
   signer = new Signer(gltf.scene, lib);
   chest = signer.bones.chest;
@@ -125,7 +157,7 @@ function frame(now) {
     } else {
       poses = { R: signer.restPose('R'), L: signer.restPose('L') };
     }
-    signer.apply(poses);
+    signer.applySmoothed(poses, dt);
   }
   controls.update();
   renderer.render(scene, camera);

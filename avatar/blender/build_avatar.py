@@ -1,6 +1,11 @@
 """
-Genera de forma procedural el avatar intérprete (torso, cabeza, brazos y manos) con su
-esqueleto y lo exporta a GLB para el visor web.
+Genera de forma procedural la avatar intérprete (mujer, complexión media, piel morena media,
+cabello corto azul metálico): torso, cabeza, brazos y manos con su esqueleto, exportada a GLB.
+
+Flujo de malla: formas base -> unión volumétrica (voxel remesh) -> retopología en quads
+(QuadriFlow) -> subdivisión -> pesos por difusión de calor (bone heat) suavizados, máx. 4
+influencias por vértice. La ropa copia los pesos de la piel y la piel cubierta se elimina, de modo
+que nada atraviesa la tela al moverse.
 
 Uso (Blender 4.2 LTS, sin interfaz):
     blender -b -P avatar/blender/build_avatar.py -- --out avatar/web/assets/avatar.glb \
@@ -26,11 +31,15 @@ import bpy
 import numpy as np
 from mathutils import Vector
 
-SKIN_SRGB = (0.72, 0.53, 0.40)      # Tono de piel medio (moreno claro)
-SHIRT_SRGB = (0.10, 0.12, 0.16)     # Ropa oscura lisa, como usan los intérpretes de LSM
-HAIR_SRGB = (0.05, 0.035, 0.03)
-NAIL_SRGB = (0.82, 0.64, 0.56)
-LIP_SRGB = (0.55, 0.32, 0.27)
+SKIN_SRGB = (0.71, 0.52, 0.41)      # Tono de piel medio (moreno claro)
+SHIRT_SRGB = (0.075, 0.085, 0.115)  # Ropa oscura lisa, como usan los intérpretes de LSM
+HAIR_SRGB = (0.16, 0.36, 0.78)      # Azul metálico
+NAIL_SRGB = (0.80, 0.58, 0.55)
+LIP_SRGB = (0.62, 0.33, 0.33)
+BROW_SRGB = (0.09, 0.11, 0.20)
+METAL_SRGB = (0.86, 0.86, 0.88)
+
+HAND_SCALE = 0.93                   # Mano femenina adulta (~7 % menor que la masculina media)
 
 FINGERS = ("index", "middle", "ring", "pinky")
 
@@ -59,18 +68,27 @@ THUMB_DIR = (0.62, 0.70, 0.36)
 THUMB_LEN = (0.046, 0.033, 0.028)
 THUMB_RADIUS = (0.0135, 0.0112, 0.0098, 0.0086)
 
+HAND_MCP = {k: tuple(c * HAND_SCALE for c in v) for k, v in HAND_MCP.items()}
+HAND_PHALANX = {k: tuple(c * HAND_SCALE for c in v) for k, v in HAND_PHALANX.items()}
+HAND_RADIUS = {k: tuple(c * HAND_SCALE * 0.97 for c in v) for k, v in HAND_RADIUS.items()}
+THUMB_CMC = tuple(c * HAND_SCALE for c in THUMB_CMC)
+THUMB_LEN = tuple(c * HAND_SCALE for c in THUMB_LEN)
+THUMB_RADIUS = tuple(c * HAND_SCALE * 0.97 for c in THUMB_RADIUS)
+
 
 def srgb_to_linear(c: float) -> float:
     return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
 
 
-def make_material(name: str, srgb: tuple[float, float, float], roughness: float = 0.6):
+def make_material(name: str, srgb: tuple[float, float, float], roughness: float = 0.6,
+                  metallic: float = 0.0):
     mat = bpy.data.materials.new(name)
     mat.use_nodes = True
     mat.use_backface_culling = False
     bsdf = mat.node_tree.nodes.get("Principled BSDF")
     bsdf.inputs["Base Color"].default_value = (*[srgb_to_linear(c) for c in srgb], 1.0)
     bsdf.inputs["Roughness"].default_value = roughness
+    bsdf.inputs["Metallic"].default_value = metallic
     return mat
 
 
@@ -102,9 +120,9 @@ def build_bone_table() -> list[dict]:
 
     for side in ("R", "L"):
         s = -1.0 if side == "R" else 1.0
-        shoulder = Vector((0.175 * s, 0.0, 1.405))
-        elbow = Vector((0.455 * s, 0.0, 1.405))
-        wrist = Vector((0.715 * s, 0.0, 1.405))
+        shoulder = Vector((0.163 * s, 0.0, 1.405))
+        elbow = Vector((0.428 * s, 0.0, 1.405))
+        wrist = Vector((0.672 * s, 0.0, 1.405))
         mid = elbow.lerp(wrist, 0.5)
         add(f"clavicle_{side}", "chest", (0.02 * s, -0.025, 1.395), shoulder)
         add(f"upperarm_{side}", f"clavicle_{side}", shoulder, elbow)
@@ -221,115 +239,244 @@ def apply_modifier(obj, mtype, **props):
     bpy.ops.object.modifier_apply(modifier=mod.name)
 
 
-def remesh_smooth(obj, voxel, smooth_iters, smooth_factor=0.5, decimate=None):
-    apply_modifier(obj, "REMESH", mode="VOXEL", voxel_size=voxel, adaptivity=0.0)
-    if smooth_iters:
-        apply_modifier(obj, "SMOOTH", factor=smooth_factor, iterations=smooth_iters)
-    if decimate:
-        apply_modifier(obj, "DECIMATE", ratio=decimate)
+def set_smooth(obj):
     for poly in obj.data.polygons:
         poly.use_smooth = True
 
 
+def retopo(obj, voxel, faces, smooth_iters=6, smooth_factor=0.6, subdiv=1):
+    """Unión volumétrica + retopología en quads (QuadriFlow) + subdivisión Catmull-Clark."""
+    apply_modifier(obj, "REMESH", mode="VOXEL", voxel_size=voxel, adaptivity=0.0)
+    if smooth_iters:
+        apply_modifier(obj, "SMOOTH", factor=smooth_factor, iterations=smooth_iters)
+    before = len(obj.data.polygons)
+    bpy.ops.object.select_all(action="DESELECT")
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    try:
+        bpy.ops.object.quadriflow_remesh("EXEC_DEFAULT", target_faces=faces, use_mesh_symmetry=False,
+                                         use_preserve_sharp=False, use_preserve_boundary=False,
+                                         smooth_normals=False, seed=7)
+    except RuntimeError as exc:
+        print(f"[avatar] QuadriFlow falló en {obj.name}: {exc}")
+    polys = obj.data.polygons
+    quads = sum(1 for p in polys if len(p.vertices) == 4)
+    if len(polys) == before or quads < 0.9 * len(polys):
+        print(f"[avatar] {obj.name}: sin retopología en quads, se usa decimado")
+        apply_modifier(obj, "DECIMATE", ratio=min(1.0, faces / max(before, 1)))
+    if subdiv:
+        apply_modifier(obj, "SUBSURF", levels=subdiv, render_levels=subdiv)
+    set_smooth(obj)
+    print(f"[avatar] {obj.name}: {len(obj.data.polygons)} caras "
+          f"({100.0 * sum(1 for p in obj.data.polygons if len(p.vertices) == 4) / len(obj.data.polygons):.0f} % quads)")
+    return obj
+
+
+def cut_and_relax(obj, predicate, relax=12):
+    """Recorta vértices y relaja los bordes abiertos para que el corte quede limpio, sin escalones."""
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if predicate(v.co)], context="VERTS")
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context="VERTS")
+    for _ in range(relax):
+        border = [v for v in bm.verts if v.is_boundary]
+        bmesh.ops.smooth_vert(bm, verts=border, factor=0.5, use_axis_x=True, use_axis_y=True, use_axis_z=True)
+    bm.to_mesh(obj.data)
+    bm.free()
+
+
 def torso_parts(B, pad=0.0):
-    """Envolventes del torso; `pad` infla las formas para generar la camisa."""
+    """Envolventes del torso femenino; `pad` infla las formas para generar la blusa."""
     P = pad
-    pelvis = ellipsoid_pts((0, 0.0, 0.98), (0.165 + P, 0.11 + P, 0.09 + P))
-    waist = ellipsoid_pts((0, 0.005, 1.13), (0.148 + P, 0.097 + P, 0.07 + P))
-    chest = ellipsoid_pts((0, -0.008, 1.29), (0.168 + P, 0.112 + P, 0.09 + P))
-    upper_chest = ellipsoid_pts((0, 0.0, 1.38), (0.172 + P, 0.095 + P, 0.065 + P))
-    traps = [ellipsoid_pts((0.085 * s, 0.012, 1.435), (0.075 + P, 0.058 + P, 0.035 + P)) for s in (-1, 1)]
-    delts = [sphere_pts(B[f"upperarm_{sd}"]["head"] + Vector((0, 0, -0.012)), 0.056 + P) for sd in ("R", "L")]
+    pelvis = ellipsoid_pts((0, 0.008, 0.985), (0.152 + P, 0.100 + P, 0.12 + P))
+    waist = ellipsoid_pts((0, 0.010, 1.125), (0.126 + P, 0.087 + P, 0.075 + P))
+    ribs = ellipsoid_pts((0, 0.0, 1.255), (0.140 + P, 0.093 + P, 0.09 + P))
+    upper = ellipsoid_pts((0, 0.006, 1.365), (0.146 + P, 0.082 + P, 0.06 + P))
+    traps = [ellipsoid_pts((0.072 * s, 0.014, 1.428), (0.062 + P, 0.048 + P, 0.03 + P)) for s in (-1, 1)]
+    delts = [sphere_pts(B[f"upperarm_{sd}"]["head"] + Vector((0, 0, -0.01)), 0.046 + P) for sd in ("R", "L")]
+    bust = [ellipsoid_pts((0.055 * s, -0.058, 1.272), (0.057 + P, 0.050 + P, 0.054 + P)) for s in (-1, 1)]
     return [hull_object("torso_low", [pelvis, waist]),
-            hull_object("torso_up", [waist, chest, upper_chest, *traps, *delts])]
+            hull_object("torso_mid", [waist, ribs]),
+            hull_object("torso_up", [ribs, upper, *traps, *delts]),
+            hull_object("bust", [*bust, ellipsoid_pts((0, -0.03, 1.275), (0.085 + P, 0.05 + P, 0.06 + P))])]
 
 
-HEAD_C = Vector((0, -0.012, 1.628))
+HEAD_C = Vector((0, -0.012, 1.614))
 
 
 def build_body(B):
+    """Torso, cuello y brazos como una sola piel continua."""
     parts = torso_parts(B)
-    parts.append(capsule("neck", Vector((0, 0.0, 1.40)), Vector((0, -0.012, 1.55)), 0.058, 0.054))
-    head_c = HEAD_C
-    k = 1.06
-    cranium = ellipsoid_pts(head_c + Vector((0, 0.008, 0.015)), (0.078 * k, 0.098 * k, 0.106 * k))
-    jaw = ellipsoid_pts(head_c + Vector((0, -0.035, -0.058)), (0.058, 0.056, 0.052))
-    chin = sphere_pts(head_c + Vector((0, -0.078, -0.088)), 0.022)
-    parts.append(hull_object("head_shape", [cranium, jaw, chin]))
-    nose = hull_object("nose", [sphere_pts(head_c + Vector((0, -0.102, 0.012)), 0.007),
-                                sphere_pts(head_c + Vector((0, -0.113, -0.018)), 0.0115)])
-    parts.append(nose)
-    for s in (-1, 1):
-        parts.append(hull_object(f"ear_{s}", [ellipsoid_pts(head_c + Vector((0.082 * s, 0.012, 0.0)),
-                                                            (0.012, 0.022, 0.032))]))
+    parts.append(capsule("neck", Vector((0, 0.004, 1.40)), Vector((0, -0.004, 1.575)), 0.056, 0.050))
     for side in ("R", "L"):
         sh = B[f"upperarm_{side}"]["head"]
         el = B[f"upperarm_{side}"]["tail"]
         wr = B[f"lowerarm_twist_{side}"]["tail"]
-        parts.append(capsule(f"uarm_{side}", sh, el, 0.049, 0.041))
-        fore_mid = el.lerp(wr, 0.3)
-        parts.append(hull_object(f"farm_{side}", [sphere_pts(el, 0.041),
-                                                   ellipsoid_pts(fore_mid, (0.041, 0.039, 0.036)),
-                                                   ellipsoid_pts(wr, (0.013, 0.029, 0.02))]))
+        parts.append(capsule(f"uarm_{side}", sh, el, 0.043, 0.035))
+        parts.append(hull_object(f"farm_{side}", [sphere_pts(el, 0.035),
+                                                   ellipsoid_pts(el.lerp(wr, 0.28), (0.040, 0.034, 0.031)),
+                                                   ellipsoid_pts(wr, (0.012, 0.025, 0.017))]))
     body = join_objects(parts, "Body")
-    remesh_smooth(body, voxel=0.0055, smooth_iters=8, smooth_factor=0.6, decimate=0.45)
-    return body
+    return retopo(body, voxel=0.005, faces=12000, smooth_iters=8, smooth_factor=0.6)
+
+
+def surface_point(bvh, x, z):
+    hit = bvh.ray_cast(Vector((x, -0.5, z)), Vector((0, 1, 0)))
+    return hit[0] if hit[0] is not None else Vector((x, HEAD_C.y - 0.08, z))
+
+
+def build_head(B):
+    """Cabeza femenina con rasgos suaves; ojos, párpados, cejas y labios se apoyan en la superficie."""
+    from mathutils.bvhtree import BVHTree
+
+    c = HEAD_C
+    core = hull_object("head_core", [
+        ellipsoid_pts(c + Vector((0, 0.010, 0.018)), (0.074, 0.093, 0.100)),
+        ellipsoid_pts(c + Vector((0, -0.026, -0.048)), (0.060, 0.058, 0.050)),
+        sphere_pts(c + Vector((0, -0.074, -0.083)), 0.018),
+        *[sphere_pts(c + Vector((0.046 * s, -0.060, 0.0)), 0.026) for s in (-1, 1)],
+    ])
+    bvh = BVHTree.FromObject(core, bpy.context.evaluated_depsgraph_get())
+    details = []
+
+    for s in (-1, 1):
+        surf = surface_point(bvh, 0.031 * s, c.z + 0.020)
+        ec = surf + Vector((0, 0.0065, 0))
+        details.append(("eye_white", hull_object(f"eye_{s}", [sphere_pts(ec, 0.0118)])))
+        details.append(("iris", hull_object(f"iris_{s}", [ellipsoid_pts(ec + Vector((0, -0.0106, 0)),
+                                                                          (0.0058, 0.0024, 0.0058))])))
+        details.append(("pupil", hull_object(f"pupil_{s}", [ellipsoid_pts(ec + Vector((0, -0.0119, 0)),
+                                                                            (0.0025, 0.0012, 0.0025))])))
+        lid = hull_object(f"lid_{s}", [sphere_pts(ec, 0.0127)])
+        bm = bmesh.new()
+        bm.from_mesh(lid.data)
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < ec.z + 0.0032 or v.co.y > ec.y + 0.003],
+                         context="VERTS")
+        bm.to_mesh(lid.data)
+        bm.free()
+        details.append(("skin", lid))
+        details.append(("brow", hull_object(f"lash_{s}", [ellipsoid_pts(ec + Vector((0.0015 * s, -0.0085, 0.0062)),
+                                                                          (0.0115, 0.0045, 0.0011))])))
+        brow = []
+        for k in range(5):
+            x = (0.013 + 0.0085 * k) * s
+            z = c.z + 0.041 + 0.0065 * math.sin(math.pi * (k + 0.5) / 5.0)
+            p = surface_point(bvh, x, z) + Vector((0, -0.0012, 0))
+            brow.append(sphere_pts(p, 0.0029 - 0.00025 * k))
+        details.append(("brow", hull_object(f"brow_{s}", brow)))
+    up = surface_point(bvh, 0.0, c.z - 0.043)
+    lo = surface_point(bvh, 0.0, c.z - 0.053)
+    details.append(("lip", hull_object("lip_up", [ellipsoid_pts(up + Vector((0, 0.0028, 0.0005)), (0.0195, 0.0055, 0.0045))])))
+    details.append(("lip", hull_object("lip_lo", [ellipsoid_pts(lo + Vector((0, 0.0026, 0)), (0.0175, 0.0060, 0.0052))])))
+
+    nose_top = surface_point(bvh, 0.0, c.z + 0.018)
+    nose_tip = surface_point(bvh, 0.0, c.z - 0.016)
+    nose = hull_object("nose", [sphere_pts(nose_top + Vector((0, 0.002, 0)), 0.0055),
+                                sphere_pts(nose_tip + Vector((0, -0.010, 0)), 0.0088),
+                                *[sphere_pts(nose_tip + Vector((0.0095 * s, -0.004, -0.004)), 0.0062) for s in (-1, 1)]])
+    ears = [hull_object(f"ear_{s}", [ellipsoid_pts(c + Vector((0.077 * s, 0.014, 0.0)), (0.010, 0.018, 0.027))])
+            for s in (-1, 1)]
+    head = join_objects([core, nose, *ears], "Head")
+    retopo(head, voxel=0.0022, faces=9000, smooth_iters=4, smooth_factor=0.5)
+    for _, o in details:
+        set_smooth(o)
+    return head, details
+
+
+def build_hair():
+    """Corte corto tipo bob/pixie con flequillo de lado, azul metálico."""
+    c = HEAD_C
+    pieces = [
+        hull_object("hair_cap", [ellipsoid_pts(c + Vector((0, 0.012, 0.022)), (0.083, 0.103, 0.108)),
+                                 ellipsoid_pts(c + Vector((0, 0.022, 0.072)), (0.075, 0.085, 0.062))]),
+        hull_object("hair_fringe", [ellipsoid_pts(c + Vector((0.016, -0.064, 0.066)), (0.068, 0.040, 0.034)),
+                                    ellipsoid_pts(c + Vector((0.052, -0.050, 0.040)), (0.030, 0.034, 0.030))]),
+        hull_object("hair_nape", [ellipsoid_pts(c + Vector((0, 0.066, -0.030)), (0.072, 0.042, 0.058))]),
+        *[hull_object(f"hair_side_{s}", [ellipsoid_pts(c + Vector((0.072 * s, -0.004, 0.002)), (0.022, 0.060, 0.060))])
+          for s in (-1, 1)],
+    ]
+    hair = join_objects(pieces, "Hair")
+    retopo(hair, voxel=0.003, faces=6000, smooth_iters=6, smooth_factor=0.6, subdiv=0)
+
+    def cut(co):
+        p = co - c
+        face = p.y < -0.025 and p.z < 0.034 and abs(p.x) < 0.062
+        below = p.z < -0.075
+        sides = abs(p.x) > 0.045 and p.z < -0.032 and p.y < 0.035
+        sideburn = p.y < -0.035 and p.z < 0.0
+        return face or below or sides or sideburn
+
+    cut_and_relax(hair, cut)
+    apply_modifier(hair, "SUBSURF", levels=1, render_levels=1)
+    tex = bpy.data.textures.new("hair_clumps", type="CLOUDS")
+    tex.noise_scale = 0.006
+    apply_modifier(hair, "DISPLACE", texture=tex, strength=0.0022, mid_level=0.5)
+    apply_modifier(hair, "SMOOTH", factor=0.5, iterations=2)
+    set_smooth(hair)
+    return hair
+
+
+def build_earrings():
+    objs = []
+    for s in (-1, 1):
+        bpy.ops.mesh.primitive_torus_add(major_radius=0.0075, minor_radius=0.0012, major_segments=32,
+                                         minor_segments=8, location=HEAD_C + Vector((0.081 * s, 0.010, -0.040)),
+                                         rotation=(0.0, math.pi / 2, 0.0))
+        o = bpy.context.active_object
+        o.name = f"earring_{s}"
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        set_smooth(o)
+        objs.append(o)
+    return join_objects(objs, "Earrings")
 
 
 def build_shirt(B):
-    """Playera oscura de manga corta como malla independiente (bordes limpios)."""
-    pad = 0.007
+    """Blusa oscura entallada de manga corta y escote redondo, con grosor de tela."""
+    pad = 0.008
     parts = torso_parts(B, pad)
     for side in ("R", "L"):
         sh = B[f"upperarm_{side}"]["head"]
         el = B[f"upperarm_{side}"]["tail"]
-        parts.append(capsule(f"sleeve_{side}", sh, sh.lerp(el, 0.55), 0.049 + pad + 0.004, 0.045 + pad + 0.004))
+        parts.append(capsule(f"sleeve_{side}", sh, sh.lerp(el, 0.5), 0.043 + pad + 0.004, 0.039 + pad + 0.004))
     shirt = join_objects(parts, "Shirt")
-    apply_modifier(shirt, "REMESH", mode="VOXEL", voxel_size=0.005, adaptivity=0.0)
-    bm = bmesh.new()
-    bm.from_mesh(shirt.data)
-    cut = []
-    for vert in bm.verts:
-        c = vert.co
-        neck_hole = c.z > 1.40 and (c.x ** 2 + ((c.y + 0.012) / 1.15) ** 2) < 0.07 ** 2
-        front_v = c.z > 1.385 and abs(c.x) < 0.045 and c.y < -0.03
-        sleeve_end = abs(c.x) > 0.175 + 0.28 * 0.55
-        if neck_hole or front_v or sleeve_end or c.z < 0.885:
-            cut.append(vert)
-    bmesh.ops.delete(bm, geom=cut, context="VERTS")
-    bm.to_mesh(shirt.data)
-    bm.free()
-    apply_modifier(shirt, "SMOOTH", factor=0.6, iterations=6)
-    apply_modifier(shirt, "DECIMATE", ratio=0.5)
-    for poly in shirt.data.polygons:
-        poly.use_smooth = True
+    retopo(shirt, voxel=0.005, faces=6000, smooth_iters=6, smooth_factor=0.6, subdiv=0)
+    sleeve_x = 0.163 + 0.265 * 0.5
+
+    def cut(p):
+        neck_hole = p.z > 1.385 and (p.x ** 2 + ((p.y + 0.008) / 1.2) ** 2) < 0.078 ** 2
+        scoop = p.z > 1.345 and p.y < -0.02 and (p.x / 0.075) ** 2 + ((p.z - 1.43) / 0.085) ** 2 < 1.0
+        return neck_hole or scoop or abs(p.x) > sleeve_x or p.z < 0.885
+
+    cut_and_relax(shirt, cut)
+    apply_modifier(shirt, "SUBSURF", levels=1, render_levels=1)
+    apply_modifier(shirt, "SMOOTH", factor=0.4, iterations=2)
+    apply_modifier(shirt, "SOLIDIFY", thickness=0.0028, offset=1.0, use_even_offset=True, use_rim=True)
+    set_smooth(shirt)
     return shirt
 
 
 def build_hand(B, side):
     u, v, n = hand_frame(side)
     wrist = B[f"hand_{side}"]["head"]
+    hs = HAND_SCALE
     parts = []
-    # Palma: envolvente convexa entre muñeca y nudillos
-    pts = [ellipsoid_pts(wrist + u * 0.006, (0.014, 0.026, 0.017))]
+    pts = [ellipsoid_pts(wrist + u * 0.004, (0.016, 0.025 * hs, 0.017 * hs))]
     for f in FINGERS:
         mcp = B[f"{f}_01_{side}"]["head"]
         r = HAND_RADIUS[f][0] * 1.05
         pts.append(ellipsoid_pts(mcp - u * 0.004 + n * 0.002, (r, r, r * 1.05)))
-    pts.append(ellipsoid_pts(wrist + u * 0.05 + v * -0.03 + n * 0.006, (0.018, 0.014, 0.016)))
+    pts.append(ellipsoid_pts(wrist + (u * 0.05 + v * -0.03 + n * 0.006) * hs, (0.018 * hs, 0.014 * hs, 0.015 * hs)))
     parts.append(hull_object(f"palm_{side}", pts))
-    # Eminencia tenar
     cmc = B[f"thumb_01_{side}"]["head"]
     t_mcp = B[f"thumb_01_{side}"]["tail"]
     parts.append(hull_object(f"thenar_{side}", [
-        sphere_pts(cmc + n * 0.004, 0.016),
+        sphere_pts(cmc + n * 0.004, 0.015 * hs),
         sphere_pts(t_mcp.lerp(cmc, 0.35) + n * 0.003, THUMB_RADIUS[0]),
-        sphere_pts(wrist + u * 0.045 + v * 0.012 + n * 0.008, 0.012),
+        sphere_pts(wrist + (u * 0.045 + v * 0.012 + n * 0.008) * hs, 0.011 * hs),
     ]))
     chain = [f"thumb_01_{side}", f"thumb_02_{side}", f"thumb_03_{side}"]
     for i, bn in enumerate(chain):
-        a, b = B[bn]["head"], B[bn]["tail"]
-        parts.append(capsule(bn + "_m", a, b, THUMB_RADIUS[i], THUMB_RADIUS[i + 1]))
+        parts.append(capsule(bn + "_m", B[bn]["head"], B[bn]["tail"], THUMB_RADIUS[i], THUMB_RADIUS[i + 1]))
     for f in FINGERS:
         for i in range(3):
             bn = f"{f}_0{i + 1}_{side}"
@@ -339,8 +486,7 @@ def build_hand(B, side):
                 b = b - (b - a).normalized() * rb * 0.6
             parts.append(capsule(bn + "_m", a, b, ra, rb))
     hand = join_objects(parts, f"Hand_{side}")
-    remesh_smooth(hand, voxel=0.0016, smooth_iters=4, smooth_factor=0.5, decimate=0.35)
-    return hand
+    return retopo(hand, voxel=0.0013, faces=5000, smooth_iters=4, smooth_factor=0.5)
 
 
 def build_nails(B, side):
@@ -359,42 +505,8 @@ def build_nails(B, side):
         m = Matrix(rot.tolist())
         objs.append(hull_object(bn + "_nail", [ellipsoid_pts(c, (r * 0.72, r * 1.05, r * 0.22), m)]))
     nails = join_objects(objs, f"Nails_{side}")
-    for poly in nails.data.polygons:
-        poly.use_smooth = True
+    set_smooth(nails)
     return nails
-
-
-def build_face_details(B):
-    head_c = HEAD_C
-    objs = []
-    eye_mats = []
-    for s in (-1, 1):
-        c = head_c + Vector((0.032 * s, -0.082, 0.022))
-        objs.append(("eye_white", hull_object(f"eye_{s}", [sphere_pts(c, 0.0125)])))
-        objs.append(("iris", hull_object(f"iris_{s}", [ellipsoid_pts(c + Vector((0, -0.0105, 0)),
-                                                                       (0.0065, 0.003, 0.0065))])))
-        brow = [sphere_pts(head_c + Vector(((0.018 + 0.012 * k) * s, -0.093 + 0.004 * k, 0.045 + 0.003 * (1 - k))),
-                           0.0042) for k in range(3)]
-        objs.append(("hair", hull_object(f"brow_{s}", brow)))
-    lips = hull_object("lips", [ellipsoid_pts(head_c + Vector((0, -0.096, -0.048)), (0.022, 0.008, 0.0065))])
-    objs.append(("lip", lips))
-    hair = hull_object("hair", [ellipsoid_pts(head_c + Vector((0, 0.014, 0.03)), (0.083, 0.104, 0.105)),
-                                ellipsoid_pts(head_c + Vector((0, -0.03, 0.075)), (0.07, 0.06, 0.05))])
-    # Recorta el cabello por debajo de la frente y detrás de la cara
-    bm = bmesh.new()
-    bm.from_mesh(hair.data)
-    cut = [vert for vert in bm.verts
-           if vert.co.z < head_c.z + 0.035 and vert.co.y < head_c.y + 0.02
-           or vert.co.z < head_c.z - 0.045]
-    bmesh.ops.delete(bm, geom=cut, context="VERTS")
-    bm.to_mesh(hair.data)
-    bm.free()
-    apply_modifier(hair, "SOLIDIFY", thickness=0.006)
-    objs.append(("hair", hair))
-    for _, o in objs:
-        for poly in o.data.polygons:
-            poly.use_smooth = True
-    return objs
 
 
 # ---------------------------------------------------------------------------
@@ -443,6 +555,119 @@ def assign_weights(obj, bones, allowed, power=6.0, fixed=None):
             g.add([vi], w, "REPLACE")
 
 
+
+
+def heat_weights(rig, obj, allowed):
+    """Pesos por difusión de calor de Blender restringidos a `allowed`."""
+    bpy.ops.object.select_all(action="DESELECT")
+    obj.select_set(True)
+    rig.select_set(True)
+    bpy.context.view_layer.objects.active = rig
+    bpy.ops.object.parent_set(type="ARMATURE_AUTO")
+    for g in list(obj.vertex_groups):
+        if g.name not in allowed:
+            obj.vertex_groups.remove(g)
+
+
+def finalize_weights(obj, bones, allowed, smooth_repeat=2, factor=0.5):
+    """Suaviza (laplaciano sobre aristas), limpia, limita a 4 influencias, rellena y normaliza."""
+    me = obj.data
+    nv = len(me.vertices)
+    groups = [g.name for g in obj.vertex_groups]
+    gi = {g.index: k for k, g in enumerate(obj.vertex_groups)}
+    W = np.zeros((nv, max(len(groups), 1)))
+    for v in me.vertices:
+        for g in v.groups:
+            W[v.index, gi[g.group]] = g.weight
+    if smooth_repeat and len(me.edges):
+        e = np.array([ed.vertices[:] for ed in me.edges])
+        deg = np.bincount(e.ravel(), minlength=nv).astype(float)[:, None]
+        for _ in range(smooth_repeat):
+            acc = np.zeros_like(W)
+            np.add.at(acc, e[:, 0], W[e[:, 1]])
+            np.add.at(acc, e[:, 1], W[e[:, 0]])
+            W = np.where(deg > 0, (1 - factor) * W + factor * acc / np.maximum(deg, 1), W)
+    W[W < 0.01] = 0.0
+    if W.shape[1] > 4:
+        drop = np.argsort(W, axis=1)[:, :-4]
+        np.put_along_axis(W, drop, 0.0, axis=1)
+    empty = np.where(W.sum(1) <= 1e-6)[0]
+    if len(empty):
+        idx = {b["name"]: b for b in bones}
+        names = [n for n in allowed if n in idx]
+        co = np.array([me.vertices[i].co[:] for i in empty])
+        D = np.stack([seg_dist(co, np.array(idx[n]["head"][:]), np.array(idx[n]["tail"][:])) for n in names], 1)
+        for vi, k in zip(empty, np.argmin(D, axis=1)):
+            if names[k] not in groups:
+                obj.vertex_groups.new(name=names[k])
+                groups.append(names[k])
+                W = np.hstack([W, np.zeros((nv, 1))])
+            W[vi, groups.index(names[k])] = 1.0
+    W /= W.sum(1, keepdims=True)
+    for k, nm in enumerate(groups):
+        g = obj.vertex_groups[nm]
+        g.remove(list(range(nv)))
+        nz = np.nonzero(W[:, k])[0]
+        for vi in nz:
+            g.add([int(vi)], float(W[vi, k]), "REPLACE")
+    print(f"[avatar] {obj.name}: pesos listos ({len(empty)} vértices rellenados)")
+
+
+def copy_weights(src, dst, factor=None, k=4):
+    """Copia pesos del vértice más cercano de `src` (promedio IDW); `factor(co)` mezcla con los propios."""
+    from mathutils.kdtree import KDTree
+
+    kd = KDTree(len(src.data.vertices))
+    for v in src.data.vertices:
+        kd.insert(v.co, v.index)
+    kd.balance()
+    names = {g.index: g.name for g in src.vertex_groups}
+    sw = [{names[g.group]: g.weight for g in v.groups} for v in src.data.vertices]
+    for nm in names.values():
+        if nm not in dst.vertex_groups:
+            dst.vertex_groups.new(name=nm)
+    dnames = {g.index: g.name for g in dst.vertex_groups}
+    for v in dst.data.vertices:
+        f = 1.0 if factor is None else factor(v.co)
+        if f <= 0.0:
+            continue
+        acc, tot = {}, 0.0
+        for _, i, d in kd.find_n(v.co, k):
+            w = 1.0 / (d + 1e-4)
+            tot += w
+            for nm, x in sw[i].items():
+                acc[nm] = acc.get(nm, 0.0) + w * x
+        own = {dnames[g.group]: g.weight for g in v.groups}
+        for nm in set(acc) | set(own):
+            val = f * acc.get(nm, 0.0) / tot + (1.0 - f) * own.get(nm, 0.0)
+            grp = dst.vertex_groups[nm]
+            if val > 0.003:
+                grp.add([v.index], val, "REPLACE")
+            elif nm in own:
+                grp.remove([v.index])
+
+
+def hide_covered_skin(body, cloth, max_dist=0.03, keep_rings=2):
+    """Elimina la piel tapada por la ropa (conservando un margen) para que nunca la atraviese."""
+    from mathutils.bvhtree import BVHTree
+
+    bvh = BVHTree.FromObject(cloth, bpy.context.evaluated_depsgraph_get())
+    bm = bmesh.new()
+    bm.from_mesh(body.data)
+    bm.normal_update()
+    bm.verts.ensure_lookup_table()
+    covered = {v.index for v in bm.verts
+               if bvh.ray_cast(v.co + v.normal * 1e-4, v.normal, max_dist)[0] is not None}
+    for _ in range(keep_rings):
+        border = {v.index for v in bm.verts if v.index in covered
+                  and any(e.other_vert(v).index not in covered for e in v.link_edges)}
+        covered -= border
+    bmesh.ops.delete(bm, geom=[bm.verts[i] for i in covered], context="VERTS")
+    bm.to_mesh(body.data)
+    bm.free()
+    print(f"[avatar] Piel oculta bajo la ropa eliminada: {len(covered)} vértices")
+
+
 # ---------------------------------------------------------------------------
 # Principal
 # ---------------------------------------------------------------------------
@@ -461,13 +686,18 @@ def main(argv):
     bones = build_bone_table()
     B = {b["name"]: b for b in bones}
 
-    skin = make_material("Skin", SKIN_SRGB, 0.55)
-    shirt = make_material("Shirt", SHIRT_SRGB, 0.85)
-    hair_m = make_material("Hair", HAIR_SRGB, 0.7)
-    nail_m = make_material("Nail", NAIL_SRGB, 0.3)
-    eye_w = make_material("EyeWhite", (0.93, 0.92, 0.9), 0.2)
-    iris_m = make_material("Iris", (0.16, 0.09, 0.05), 0.2)
-    lip_m = make_material("Lip", LIP_SRGB, 0.5)
+    mats = {
+        "skin": make_material("Skin", SKIN_SRGB, 0.5),
+        "shirt": make_material("Shirt", SHIRT_SRGB, 0.88),
+        "hair": make_material("Hair", HAIR_SRGB, 0.3, metallic=0.75),
+        "brow": make_material("Brow", BROW_SRGB, 0.6),
+        "nail": make_material("Nail", NAIL_SRGB, 0.25),
+        "eye_white": make_material("EyeWhite", (0.93, 0.92, 0.9), 0.15),
+        "iris": make_material("Iris", (0.24, 0.13, 0.06), 0.25),
+        "pupil": make_material("Pupil", (0.01, 0.01, 0.01), 0.1),
+        "lip": make_material("Lip", LIP_SRGB, 0.4),
+        "metal": make_material("Metal", METAL_SRGB, 0.18, metallic=1.0),
+    }
 
     arm_data = bpy.data.armatures.new("Rig")
     rig = bpy.data.objects.new("Rig", arm_data)
@@ -493,45 +723,61 @@ def main(argv):
 
     meshes = []
     body = build_body(B)
-    body.data.materials.append(skin)
-    assign_weights(body, bones, body_bones)
+    body.data.materials.append(mats["skin"])
+    heat_weights(rig, body, body_bones)
+    finalize_weights(body, bones, body_bones, smooth_repeat=3)
     meshes.append(body)
-    shirt_obj = build_shirt(B)
-    shirt_obj.data.materials.append(shirt)
-    assign_weights(shirt_obj, bones, body_bones)
-    meshes.append(shirt_obj)
+
+    shirt = build_shirt(B)
+    shirt.data.materials.append(mats["shirt"])
+    copy_weights(body, shirt)
+    finalize_weights(shirt, bones, body_bones, smooth_repeat=1)
+    meshes.append(shirt)
 
     for s in ("R", "L"):
         hand = build_hand(B, s)
-        hand.data.materials.append(skin)
+        hand.data.materials.append(mats["skin"])
         allowed = {b["name"] for b in bones if b["name"].endswith("_" + s) and
-                   (b["name"].startswith(("hand", "thumb", "meta", *FINGERS)))}
+                   b["name"].startswith(("hand", "thumb", "meta", *FINGERS))}
         allowed.add(f"lowerarm_twist_{s}")
-        assign_weights(hand, bones, allowed, power=8.0)
+        heat_weights(rig, hand, allowed)
+        finalize_weights(hand, bones, allowed, smooth_repeat=1)
+        wrist = B[f"hand_{s}"]["head"]
+        u = hand_frame(s)[0]
+        # Junto a la muñeca, la mano usa exactamente los pesos de la piel del antebrazo (sin costura).
+        copy_weights(body, hand, factor=lambda co, w=wrist, u=u: float(np.clip(1.0 - ((co - w).dot(u) + 0.004) / 0.018, 0, 1)))
+        finalize_weights(hand, bones, allowed | body_bones, smooth_repeat=0)
         meshes.append(hand)
         nails = build_nails(B, s)
-        nails.data.materials.append(nail_m)
-        nail_allowed = {f"thumb_03_{s}"} | {f"{f}_03_{s}" for f in FINGERS}
-        assign_weights(nails, bones, nail_allowed, power=12.0)
+        nails.data.materials.append(mats["nail"])
+        assign_weights(nails, bones, {f"thumb_03_{s}"} | {f"{f}_03_{s}" for f in FINGERS}, power=12.0)
         meshes.append(nails)
 
-    mats = {"eye_white": eye_w, "iris": iris_m, "hair": hair_m, "lip": lip_m}
-    for kind, o in build_face_details(B):
+    hide_covered_skin(body, shirt)
+
+    head, details = build_head(B)
+    head.data.materials.append(mats["skin"])
+    rigid = [head, *[o for _, o in details], build_hair(), build_earrings()]
+    for kind, o in details:
         o.data.materials.append(mats[kind])
+    rigid[-2].data.materials.append(mats["hair"])
+    rigid[-1].data.materials.append(mats["metal"])
+    for o in rigid:
         assign_weights(o, bones, {"head"}, fixed="head")
         meshes.append(o)
 
     for m in meshes:
         m.parent = rig
-        mod = m.modifiers.new("Armature", "ARMATURE")
-        mod.object = rig
+        if not any(md.type == "ARMATURE" for md in m.modifiers):
+            mod = m.modifiers.new("Armature", "ARMATURE")
+            mod.object = rig
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.export_scene.gltf(filepath=str(out), export_format="GLB", export_skins=True,
-                              export_animations=False, export_yup=True, export_apply=False)
-
+                              export_animations=False, export_yup=True, export_apply=False,
+                              export_influence_nb=4, export_all_influences=False)
     skel = {
         "units": "meters",
         "coordinate_system": "three.js / glTF (Y arriba, el avatar mira hacia +Z)",
@@ -541,8 +787,8 @@ def main(argv):
     sk = Path(args.skeleton)
     sk.parent.mkdir(parents=True, exist_ok=True)
     sk.write_text(json.dumps(skel, indent=1), encoding="utf-8")
-    tri = sum(len(m.data.polygons) for m in meshes)
-    print(f"[avatar] GLB -> {out}  ({out.stat().st_size / 1e6:.2f} MB, {tri} polígonos, {len(bones)} huesos)")
+    faces = sum(len(m.data.polygons) for m in meshes)
+    print(f"[avatar] GLB -> {out}  ({out.stat().st_size / 1e6:.2f} MB, {faces} caras, {len(bones)} huesos)")
     print(f"[avatar] Esqueleto -> {sk}")
 
 

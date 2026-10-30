@@ -107,3 +107,49 @@ def test_parse_description_extracts_parameters():
     assert frames[0]["R"]["palma"] == "abajo"
     assert "L" in frames[0]
     assert any(f["R"].get("offset", [0, 0, 0])[2] > 0 for f in frames)
+
+
+def _read_glb(path):
+    import struct
+    data = open(path, "rb").read()
+    magic, _, _ = struct.unpack_from("<III", data, 0)
+    assert magic == 0x46546C67
+    jlen, _ = struct.unpack_from("<II", data, 12)
+    gltf = json.loads(data[20:20 + jlen])
+    blen, _ = struct.unpack_from("<II", data, 20 + jlen)
+    return gltf, data[28 + jlen:28 + jlen + blen]
+
+
+def _accessor(gltf, binary, idx):
+    acc = gltf["accessors"][idx]
+    view = gltf["bufferViews"][acc["bufferView"]]
+    comps = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4}[acc["type"]]
+    dtype = {5126: np.float32, 5121: np.uint8, 5123: np.uint16}[acc["componentType"]]
+    start = view.get("byteOffset", 0) + acc.get("byteOffset", 0)
+    arr = np.frombuffer(binary, dtype=dtype, count=acc["count"] * comps, offset=start).reshape(-1, comps)
+    if acc.get("normalized"):
+        arr = arr / np.iinfo(dtype).max
+    return arr.astype(float)
+
+
+def test_avatar_glb_skinning_is_clean():
+    """Máx. 4 influencias por vértice, pesos normalizados y huesos iguales al esqueleto del repo."""
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1] / "avatar"
+    gltf, binary = _read_glb(root / "web" / "assets" / "avatar.glb")
+    rig = json.loads((root / "data" / "rig_skeleton.json").read_text())
+    rig_names = {b["name"] for b in (rig["bones"] if isinstance(rig, dict) else rig)}
+    joints = {gltf["nodes"][j]["name"] for j in gltf["skins"][0]["joints"]}
+    assert joints == rig_names
+    materials = {m["name"] for m in gltf["materials"]}
+    assert {"Skin", "Hair", "Shirt"} <= materials
+    skinned = 0
+    for mesh in gltf["meshes"]:
+        for prim in mesh["primitives"]:
+            attrs = prim["attributes"]
+            assert "WEIGHTS_1" not in attrs
+            if "WEIGHTS_0" in attrs:
+                w = _accessor(gltf, binary, attrs["WEIGHTS_0"])
+                assert np.allclose(w.sum(1), 1.0, atol=0.02)
+                skinned += len(w)
+    assert skinned > 10000
