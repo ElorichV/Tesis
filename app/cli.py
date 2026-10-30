@@ -353,7 +353,14 @@ def cmd_collect(args: argparse.Namespace) -> int:
                 hand_detected=primary is not None,
             )
 
-            cv2.imshow("Sign Translator - Collect", canvas)
+            win_collect = "Sign Translator - Collect"
+            if len(fps_counter._timestamps) <= 1:
+                cv2.namedWindow(win_collect, cv2.WINDOW_NORMAL)
+                cv2.resizeWindow(win_collect, 800, 600)
+                cv2.setWindowProperty(win_collect, cv2.WND_PROP_TOPMOST, 1)
+            elif len(fps_counter._timestamps) == 5:
+                cv2.setWindowProperty(win_collect, cv2.WND_PROP_TOPMOST, 0)
+            cv2.imshow(win_collect, canvas)
             key = cv2.waitKey(1) & 0xFF
 
             if key in (27, ord("q"), ord("Q")):
@@ -544,7 +551,14 @@ def cmd_run(args: argparse.Namespace) -> int:
             )
 
             if not use_synthetic:
-                cv2.imshow("Sign Translator - Live", canvas)
+                win_name = "Sign Translator - Live"
+                if frame_count == 1:
+                    cv2.namedWindow(win_name, cv2.WINDOW_NORMAL)
+                    cv2.resizeWindow(win_name, 800, 600)
+                    cv2.setWindowProperty(win_name, cv2.WND_PROP_TOPMOST, 1)
+                elif frame_count == 5:
+                    cv2.setWindowProperty(win_name, cv2.WND_PROP_TOPMOST, 0)
+                cv2.imshow(win_name, canvas)
                 key = cv2.waitKey(1) & 0xFF
                 if key in (27, ord("q"), ord("Q")):
                     break
