@@ -7,6 +7,8 @@
 El maestro habla y un avatar 3D lo seña. El alumno seña frente a la cámara y la computadora lo dice en voz alta.<br/>
 Todo corre en una laptop, sin GPU y sin mandar video a la nube.
 
+[![Licencia MIT](https://img.shields.io/badge/licencia-MIT-green.svg)](LICENSE)
+
 `Python 3.11` · `MediaPipe Tasks` · `scikit-learn` · `Three.js` · `Blender` · `Web Speech API` · `Coqui TTS`
 
 *Prototipo para el AI Hackathon por México × Clara*
@@ -182,7 +184,11 @@ Voz abierta es un **prototipo de asistencia, no un sustituto de un intérprete**
 - [MediaPipe](https://ai.google.dev/edge/mediapipe) (Google): detección de manos, cara y pose.
 - [MakeHuman](https://github.com/makehumancommunity/makehuman): malla base del avatar (CC0).
 - [ASL Static Landmarks v1](https://huggingface.co/datasets/Siruyy/asl-static-landmarks-v1): landmarks para el modelo inicial (CC-BY-4.0).
-- [voice-translate](https://github.com/cccaballero/voice-translate): síntesis de voz.
+- [voice-translate](https://github.com/cccaballero/voice-translate): síntesis de voz (MIT).
+
+## Licencia
+
+Código bajo licencia [MIT](LICENSE). Los recursos de terceros conservan su licencia: la malla de MakeHuman es CC0 (`avatar/blender/makehuman/LICENSE.ASSETS.md`), el dataset es CC-BY-4.0 y `voice-translate/` es MIT.
 
 ---
 
