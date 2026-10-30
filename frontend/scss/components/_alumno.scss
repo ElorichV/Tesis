@@ -1,0 +1,68 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// ==========================================================================
+// Distribución del panel del alumno · .alumno
+// Columna izquierda (.alumno__media): animación 3:4 + cámara del mismo ancho.
+// Columna derecha (.alumno__info): turno, controles, texto y estado de cámara.
+// ==========================================================================
+
+.alumno {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+
+  @container panel (min-width: #{$panel-split}) {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  @include desktop {
+    flex: 1 1 auto;
+    min-height: 220px;
+    flex-direction: row;
+    align-items: stretch;
+  }
+}
+
+.alumno__media {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  min-width: 0;
+
+  @container panel (min-width: #{$panel-split}) {
+    flex: 0 0 52%;
+  }
+
+  @include desktop {
+    flex: 0 0 52%;
+    min-height: 0;
+  }
+}
+
+.alumno__info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+
+  @container panel (min-width: #{$panel-split}) {
+    flex: 1 1 0;
+  }
+
+  @include desktop {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+
+// Controles de reproducción (repetir, ampliar, velocidad)
+.player-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}

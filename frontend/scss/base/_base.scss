@@ -1,0 +1,81 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// ==========================================================================
+// Página
+// En computadora el traductor ocupa exactamente la ventana (sin scroll de
+// página); la conversación es lo único que se desplaza.
+// ==========================================================================
+
+.page {
+  @include context-light;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: $font-ui;
+  font-size: $text-base;
+  line-height: 1.6;
+  color: var(--fg);
+  background: $blanco-suave;
+  -webkit-font-smoothing: antialiased;
+
+  @include desktop {
+    height: 100vh;
+    overflow: hidden;
+  }
+}
+
+// Páginas de contenido (Fuentes) desplazan normal
+.page--scroll {
+  @include desktop {
+    height: auto;
+    overflow: visible;
+  }
+}
+
+// ==========================================================================
+// Contenedor
+// ==========================================================================
+
+.container {
+  width: 100%;
+  max-width: $container-max;
+  margin: 0 auto;
+  padding: 0 $gutter;
+
+  @include mobile {
+    padding: 0 $gutter-mobile;
+  }
+}
+
+// ==========================================================================
+// Íconos (sprite en el HTML: <svg class="icon"><use href="#icon-mic"/></svg>)
+// ==========================================================================
+
+.icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon--sm {
+  width: 16px;
+  height: 16px;
+}
+
+.icon--lg {
+  width: 32px;
+  height: 32px;
+  stroke-width: 1.5;
+}
+
+// Texto monoespaciado para datos (horas, contadores, estados)
+.mono {
+  font-family: $font-mono;
+  font-size: $text-sm;
+}

@@ -1,0 +1,71 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// ==========================================================================
+// Controles de demostración · .demo
+// Solo existe con CONFIG.DEMO_MODE = true. Fuera del recorrido normal.
+// ==========================================================================
+
+.demo {
+  @include context-surface;
+  position: fixed;
+  top: 64px;
+  right: $space-4;
+  z-index: $z-demo;
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  width: min(340px, calc(100% - 32px));
+  max-height: calc(100vh - 88px);
+  overflow-y: auto;
+  padding: $space-4;
+  border: 1px solid var(--fg-2);
+  border-radius: $radius-lg;
+}
+
+.demo__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-2;
+}
+
+.demo__title {
+  font-size: 16px;
+}
+
+.demo__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.demo__action {
+  @include reset-button;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: $radius-sm;
+  font-size: $text-sm;
+  text-align: left;
+
+  &:hover {
+    border-color: $neon;
+  }
+}
+
+.demo__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px $space-1;
+  font-size: $text-md;
+  cursor: pointer;
+
+  input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: $neon;
+  }
+}

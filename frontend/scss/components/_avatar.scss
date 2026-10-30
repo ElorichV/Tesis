@@ -1,0 +1,46 @@
+@use '../abstracts/tokens' as *;
+
+// ==========================================================================
+// Avatar de participante · .avatar
+// La letra (A / M / !) distingue a cada persona además del color.
+// ==========================================================================
+
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-family: $font-mono;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.avatar--alumno {
+  background: $neon;
+  color: $obsidiana;
+  border: 1.5px solid $obsidiana;
+}
+
+.avatar--maestro {
+  background: $blanco-suave;
+  color: $obsidiana;
+  border: 1.5px solid $obsidiana;
+}
+
+.avatar--system {
+  color: var(--fg);
+  border: 2px solid var(--fg);
+}
+
+.avatar--neutral {
+  color: var(--fg-2);
+  border: 1px dashed var(--fg-2);
+}
+
+.avatar--sm {
+  width: 28px;
+  height: 28px;
+  font-size: $text-xs;
+}

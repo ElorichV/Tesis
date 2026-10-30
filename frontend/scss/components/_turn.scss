@@ -1,0 +1,41 @@
+@use '../abstracts/tokens' as *;
+
+// ==========================================================================
+// Indicador de turno · .turn
+// Una sola fuente de verdad para ambos usuarios (role="status").
+// Modificadores: --alumno (borde neón) · --maestro (borde claro) · --neutral
+// ==========================================================================
+
+.turn {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  padding: 6px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: $radius-md;
+  font-weight: 500;
+  font-size: $text-md;
+  line-height: 1.3;
+  color: var(--fg);
+}
+
+.turn--alumno {
+  border: 2px solid $neon;
+  font-weight: 700;
+}
+
+.turn--maestro {
+  border: 2px solid var(--fg);
+  font-weight: 700;
+}
+
+.turn__text {
+  flex: 1;
+}
+
+.turn__sub {
+  display: block;
+  font-weight: 400;
+  font-size: $text-sm;
+  color: var(--fg-2);
+}

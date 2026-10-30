@@ -1,0 +1,84 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// ==========================================================================
+// Conversación · .conversation / .message
+// Única zona que desplaza dentro del panel del maestro.
+// Modificadores de .message: --interim (alumno señando) · --system (avisos)
+// ==========================================================================
+
+.conversation {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 380px;
+  overflow-y: auto;
+  padding: $space-1 6px $space-1 0;
+  list-style: none;
+
+  @include desktop {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+  }
+}
+
+.conversation__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-2;
+  margin: auto;
+  padding: $space-5;
+  color: var(--fg-2);
+  text-align: center;
+}
+
+.message {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: start;
+  gap: $space-3;
+}
+
+.message__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  font-size: $text-sm;
+  color: var(--fg-2);
+}
+
+.message__author {
+  font-weight: 700;
+  font-size: $text-md;
+  color: var(--fg);
+}
+
+.message__text {
+  margin-top: 2px;
+  font-size: 18px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.message__status {
+  margin-top: $space-1;
+  font-size: $text-sm;
+  color: var(--fg-2);
+}
+
+.message__action {
+  margin-top: $space-1;
+}
+
+.message--interim .message__text {
+  font-style: italic;
+  color: var(--fg-2);
+}
+
+.message--system .message__text {
+  font-weight: 700;
+  font-size: 16px;
+}

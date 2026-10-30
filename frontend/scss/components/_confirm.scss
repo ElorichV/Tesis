@@ -1,0 +1,55 @@
+@use '../abstracts/tokens' as *;
+
+// ==========================================================================
+// Confirmación «Entendimos…» · .confirm
+// Se muestra mientras el alumno seña; la barra marca el envío automático.
+// ==========================================================================
+
+.confirm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: $space-2 $space-3;
+  padding: 10px 12px;
+  border: 2px solid $neon;
+  border-radius: $radius-md;
+}
+
+.confirm__label {
+  display: block;
+  font-family: $font-mono;
+  font-size: $text-xs;
+  color: var(--fg-2);
+}
+
+.confirm__text {
+  font-weight: 700;
+  font-size: $text-lg;
+  line-height: 1.35;
+}
+
+.confirm__text--large {
+  font-size: 24px;
+}
+
+// Barra de envío automático (también se usa en el dictado)
+.progress {
+  grid-column: 1 / -1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--line-strong);
+
+  &::before {
+    content: '';
+    display: block;
+    width: 0;
+    height: 100%;
+    background: $neon;
+    animation: progress-fill $auto-send-ms linear forwards;
+  }
+}
+
+@keyframes progress-fill {
+  to { width: 100%; }
+}

@@ -1,0 +1,37 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// ==========================================================================
+// Traductor en vivo · .live
+// Computadora: dos paneles del mismo tamaño que llenan el alto disponible.
+// Tablet y celular: los paneles se apilan y la página desplaza.
+// ==========================================================================
+
+.live {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+
+  @include desktop {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
+.live__grid {
+  display: grid;
+  gap: $space-4;
+  padding-top: $space-3;
+  padding-bottom: $space-5;
+
+  @include wide {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  @include desktop {
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
+    padding-bottom: $space-3;
+  }
+}

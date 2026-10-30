@@ -1,0 +1,54 @@
+@use '../abstracts/tokens' as *;
+@use '../abstracts/mixins' as *;
+
+// ==========================================================================
+// Selector segmentado · .segmented (estilo iOS / YouTube)
+// Riel tenue; la opción elegida es un botón relleno en neón.
+// Estado: aria-pressed="true" en .segmented__option
+// ==========================================================================
+
+.segmented {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--tint);
+}
+
+.segmented__option {
+  @include reset-button;
+  min-width: 48px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 9px;
+  font-weight: 700;
+  font-size: $text-sm;
+  color: var(--fg);
+
+  &:hover:not([aria-pressed='true']):not([disabled]) {
+    background: var(--tint);
+  }
+
+  &[aria-pressed='true'] {
+    background: $neon;
+    color: $obsidiana;
+  }
+
+  &[disabled] {
+    @include disabled;
+  }
+}
+
+// Ocupa todo el ancho, opciones iguales
+.segmented--full {
+  display: grid;
+  grid-template-columns: repeat(var(--segments, 3), minmax(0, 1fr));
+  border-radius: $radius-md;
+
+  .segmented__option {
+    min-width: 0;
+    height: 30px;
+    padding: 0 $space-1;
+    border-radius: 8px;
+  }
+}

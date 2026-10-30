@@ -1,0 +1,92 @@
+@use 'tokens' as *;
+
+// ==========================================================================
+// Contextos de color
+// Cada superficie redefine las mismas variables CSS; los componentes solo
+// usan var(--fg), var(--fg-2), var(--ring)… y se adaptan solos.
+// ==========================================================================
+
+/// Página clara (blanco suave)
+@mixin context-light {
+  --fg: #{$obsidiana};
+  --fg-2: #{$texto-2-claro};
+  --line: rgba(11, 13, 18, .12);
+  --line-strong: rgba(11, 13, 18, .3);
+  --ring: #{$obsidiana};
+  --disabled: #{$deshabilitado-claro};
+  --tint: rgba(11, 13, 18, .06);
+  --tint-hover: rgba(11, 13, 18, .12);
+}
+
+/// Superficie azul metálico (paneles, avisos, demo)
+@mixin context-surface {
+  --fg: #{$blanco-suave};
+  --fg-2: #{$texto-2-azul};
+  --line: rgba(242, 244, 247, .18);
+  --line-strong: rgba(242, 244, 247, .34);
+  --ring: #{$neon};
+  --disabled: #{$deshabilitado-azul};
+  --tint: rgba(242, 244, 247, .14);
+  --tint-hover: rgba(242, 244, 247, .26);
+  background: $azul-metalico;
+  color: var(--fg);
+}
+
+/// Fondo oscuro (cámara activa)
+@mixin context-dark {
+  --fg: #{$blanco-suave};
+  --fg-2: #{$texto-2-azul};
+  --ring: #{$neon};
+}
+
+// ==========================================================================
+// Puntos de corte
+// ==========================================================================
+
+/// Computadora: ancho y alto suficientes para la pantalla única sin scroll
+@mixin desktop {
+  @media (min-width: $bp-desktop-w) and (min-height: $bp-desktop-h) {
+    @content;
+  }
+}
+
+@mixin wide {
+  @media (min-width: $bp-desktop-w) {
+    @content;
+  }
+}
+
+@mixin mobile {
+  @media (max-width: $bp-mobile) {
+    @content;
+  }
+}
+
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+// ==========================================================================
+// Utilidades
+// ==========================================================================
+
+@mixin focus-ring($offset: 3px) {
+  outline: 3px solid var(--ring);
+  outline-offset: $offset;
+}
+
+@mixin reset-button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+@mixin disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
