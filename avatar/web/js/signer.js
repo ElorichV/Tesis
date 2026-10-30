@@ -26,7 +26,7 @@ const ease = t => t * t * t * (t * (6 * t - 15) + 10);
 const DEG = Math.PI / 180;
 // Límites anatómicos (grados): flexo-extensión y desviación radial/cubital de la muñeca,
 // pronación/supinación del antebrazo y giro residual tolerado en la muñeca.
-export const WRIST_LIMITS = { flex: 75, dev: 28, forearmTwist: 95, wristTwist: 12 };
+export const WRIST_LIMITS = { flex: 80, ext: 70, dev: 30, forearmTwist: 100, wristTwist: 10 };
 // Volúmenes de colisión del cuerpo (glTF, metros): las manos no pueden entrar en ellos.
 const BODY_VOLUMES = [
   { c: V(0, 1.62, 0.012), r: V(0.088, 0.118, 0.108) },  // cabeza
@@ -36,6 +36,13 @@ const BODY_VOLUMES = [
 ];
 const HAND_MARGIN = 0.018;
 const clampAbs = (v, m) => Math.max(-m, Math.min(m, v));
+// Límite suave: lineal en el rango útil y se frena progresivamente cerca del tope (sin golpes).
+function softLimit(v, lo, hi) {
+  const knee = 0.8;
+  if (v > hi * knee) return hi * knee + hi * (1 - knee) * Math.tanh((v - hi * knee) / (hi * (1 - knee)));
+  if (v < -lo * knee) return -lo * knee - lo * (1 - knee) * Math.tanh((-v - lo * knee) / (lo * (1 - knee)));
+  return v;
+}
 function axisAngle(q) {
   const w = THREE.MathUtils.clamp(q.w, -1, 1);
   const ang = 2 * Math.acos(Math.abs(w));
@@ -216,15 +223,21 @@ export class Signer {
     const swing = X.clone().multiply(twFull.clone().invert());
     let theta = 2 * Math.atan2(twFull.y, twFull.w);
     theta = Math.atan2(Math.sin(theta), Math.cos(theta));
+    // Continuidad: elige la vuelta (±360°) más cercana al fotograma anterior para evitar volteos.
+    this.prevTheta = this.prevTheta || {};
+    const prevT = this.prevTheta[side];
+    if (prevT !== undefined) theta += 2 * Math.PI * Math.round((prevT - theta) / (2 * Math.PI));
+    if (Math.abs(theta) > Math.PI * 1.25) theta -= 2 * Math.PI * Math.sign(theta);
+    this.prevTheta[side] = theta;
     const L = WRIST_LIMITS;
-    const tBone = clampAbs(theta, L.forearmTwist * DEG);
+    const tBone = softLimit(theta, L.forearmTwist * DEG, L.forearmTwist * DEG);
     const tRes = clampAbs(theta - tBone, L.wristTwist * DEG);
     const yAx = V(0, 1, 0);
     const n = arm.palmLocal;
     const fAx = yAx.clone().cross(n).normalize();
     const r = axisAngle(swing);
-    const flex = clampAbs(r.dot(fAx), L.flex * DEG);
-    const dev = clampAbs(r.dot(n), L.dev * DEG);
+    const flex = softLimit(r.dot(fAx), L.ext * DEG, L.flex * DEG);
+    const dev = softLimit(r.dot(n), L.dev * DEG, L.dev * DEG);
     const swingC = fromRotVec(fAx.clone().multiplyScalar(flex).add(n.clone().multiplyScalar(dev)));
     const qBone = new THREE.Quaternion().setFromAxisAngle(yAx, tBone);
     const qRes = new THREE.Quaternion().setFromAxisAngle(yAx, tRes);

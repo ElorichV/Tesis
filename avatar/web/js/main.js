@@ -54,7 +54,7 @@ resize();
 // Aspecto físico por material: piel con brillo de terciopelo, cabello metálico anisotrópico, ojos húmedos.
 const MATERIAL_LOOK = {
   Skin: { roughness: 0.52, sheen: 0.35, sheenRoughness: 0.55, sheenColor: new THREE.Color(0xffb59a), clearcoat: 0.04, clearcoatRoughness: 0.6 },
-  Hair: { color: new THREE.Color(0x2a5bc4), metalness: 0.6, roughness: 0.34, clearcoat: 0.35, clearcoatRoughness: 0.3, envMapIntensity: 0.7 },
+  Hair: { color: new THREE.Color(0x1f3f8f), metalness: 0.3, roughness: 0.45, clearcoat: 0.2, clearcoatRoughness: 0.45, sheen: 0.5, sheenColor: new THREE.Color(0x6f8fd8), envMapIntensity: 0.6 },
   Lip: { roughness: 0.36, clearcoat: 0.35, clearcoatRoughness: 0.3, sheen: 0.2, sheenColor: new THREE.Color(0xff9a9a) },
   EyeWhite: { roughness: 0.12, clearcoat: 1.0, clearcoatRoughness: 0.02 },
   Iris: { roughness: 0.2, clearcoat: 1.0, clearcoatRoughness: 0.02 },
@@ -86,7 +86,7 @@ window.avatarDebug = () => ({ ready: !!signer, playing, clock, duration: timelin
 window.avatarSeek = async (text, t) => {
   if (text !== null) { const res = await translate(text); timeline = buildTimeline(signer, res.secuencia); $('glossText').textContent = res.glosa; }
   playing = false; clock = t;
-  const poses = sampleTimeline(signer, timeline, t); signer.prevQ = null; signer.apply(poses);
+  const poses = sampleTimeline(signer, timeline, t); signer.prevQ = null; signer.prevTheta = null; signer.apply(poses);
   $('currentText').textContent = poses.label || '—';
   renderer.render(scene, camera);
   return poses.label;

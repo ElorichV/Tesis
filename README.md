@@ -149,8 +149,9 @@ Ejecutar la suite de pruebas (normalización invariante de landmarks, trayectori
 
 ## Avatar 3D en LSM (`avatar/`)
 
-Avatar de torso de una mujer en estilo anime hiperrealista (complexión media femenina, piel morena
-media, ojos grandes, bob corto en capas azul metálico con flequillo de lado) con
+Avatar de torso de una mujer semirrealista (complexión media femenina, piel morena, ojos azules,
+labios llenos, clavículas marcadas, bob corto azul despeinado con raya al lado y mechones sueltos,
+top negro de tirantes y pantalón negro) con
 brazos y manos rigueados que interpreta texto en español como Lengua de Señas Mexicana.
 
 - **Malla:** formas base → unión volumétrica (voxel remesh) → retopología 100 % quads (QuadriFlow) →
