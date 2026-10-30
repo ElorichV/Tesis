@@ -1,0 +1,4190 @@
+{
+ "descripcion": "Léxico LSM del avatar. Formato: termino, categoria, descripcion_movimiento, imagen_url, fuente_oficial, vigencia (documento de la tesis) + glosa, sinonimos y keyframes por mano.",
+ "senas": [
+  {
+   "termino": "hola",
+   "glosa": "HOLA",
+   "categoria": "saludos",
+   "descripcion_movimiento": "Mano plana junto a la sien, palma al frente; se aleja hacia afuera.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "plana",
+      "loc": "sien",
+      "palma": "frente",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.5,
+     "R": {
+      "shape": "plana",
+      "loc": "sien",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       -0.12,
+       0.02,
+       0.08
+      ]
+     }
+    },
+    {
+     "t": 0.8,
+     "R": {
+      "shape": "plana",
+      "loc": "sien",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       -0.14,
+       0.02,
+       0.1
+      ]
+     }
+    }
+   ],
+   "duracion": 0.8,
+   "sinonimos": [
+    "saludo",
+    "saludar"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "adiós",
+   "glosa": "ADIÓS",
+   "categoria": "saludos",
+   "descripcion_movimiento": "Mano en 5 a la altura del hombro, palma al frente; oscila de lado a lado.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "5",
+      "loc": "hombro",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0.08,
+       0.15
+      ]
+     }
+    },
+    {
+     "t": 1.0,
+     "R": {
+      "shape": "5",
+      "loc": "hombro",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0.08,
+       0.15
+      ],
+      "mov": {
+       "tipo": "oscilar"
+      }
+     }
+    }
+   ],
+   "duracion": 1.0,
+   "sinonimos": [
+    "bye"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "gracias",
+   "glosa": "GRACIAS",
+   "categoria": "saludos",
+   "descripcion_movimiento": "Yemas de la mano plana tocan la barbilla; la mano se mueve hacia adelante y abajo, palma arriba.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "plana",
+      "loc": "barbilla",
+      "palma": "adentro",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "plana",
+      "loc": "barbilla",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0,
+       -0.1,
+       0.2
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [
+    "agradecer"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "por favor",
+   "glosa": "POR FAVOR",
+   "categoria": "saludos",
+   "descripcion_movimiento": "Mano plana sobre el pecho, palma al cuerpo, describe un círculo.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "plana",
+      "loc": "pecho",
+      "palma": "adentro",
+      "dedos": "lado"
+     }
+    },
+    {
+     "t": 1.0,
+     "R": {
+      "shape": "plana",
+      "loc": "pecho",
+      "palma": "adentro",
+      "dedos": "lado",
+      "mov": {
+       "tipo": "circulo"
+      }
+     }
+    }
+   ],
+   "duracion": 1.0,
+   "sinonimos": [
+    "favor"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "perdón",
+   "glosa": "PERDÓN",
+   "categoria": "saludos",
+   "descripcion_movimiento": "Puño en A sobre el pecho describe círculos.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_A",
+      "loc": "pecho",
+      "palma": "adentro",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 1.0,
+     "R": {
+      "shape": "LSM_A",
+      "loc": "pecho",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "mov": {
+       "tipo": "circulo"
+      }
+     }
+    }
+   ],
+   "duracion": 1.0,
+   "sinonimos": [
+    "disculpa",
+    "perdonar"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "bien",
+   "glosa": "BIEN",
+   "categoria": "cualidades",
+   "descripcion_movimiento": "Mano plana frente a la barbilla, palma al cuerpo, baja hacia la palma de la otra mano.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "plana",
+      "loc": "barbilla",
+      "palma": "adentro",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.02,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [
+    "bueno",
+    "buena",
+    "buenos",
+    "buenas"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "mal",
+   "glosa": "MAL",
+   "categoria": "cualidades",
+   "descripcion_movimiento": "Mano plana en la barbilla, palma al cuerpo; gira y baja con la palma hacia abajo.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "plana",
+      "loc": "barbilla",
+      "palma": "adentro",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       -0.05,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [
+    "malo",
+    "mala"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "yo",
+   "glosa": "YO",
+   "categoria": "pronombres",
+   "descripcion_movimiento": "Índice extendido señala el propio pecho.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "1",
+      "loc": "pecho",
+      "palma": "lado",
+      "dedos": "adentro",
+      "offset": [
+       0,
+       0,
+       0.12
+      ]
+     }
+    },
+    {
+     "t": 0.5,
+     "R": {
+      "shape": "1",
+      "loc": "pecho",
+      "palma": "lado",
+      "dedos": "adentro",
+      "offset": [
+       0,
+       0,
+       0.05
+      ]
+     }
+    }
+   ],
+   "duracion": 0.5,
+   "sinonimos": [
+    "mi",
+    "me"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "tú",
+   "glosa": "TÚ",
+   "categoria": "pronombres",
+   "descripcion_movimiento": "Índice extendido señala al frente, hacia el interlocutor.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.05,
+       -0.05
+      ]
+     }
+    },
+    {
+     "t": 0.5,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.05,
+       0.08
+      ]
+     }
+    }
+   ],
+   "duracion": 0.5,
+   "sinonimos": [
+    "tu",
+    "te",
+    "usted"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "él",
+   "glosa": "ÉL",
+   "categoria": "pronombres",
+   "descripcion_movimiento": "Índice extendido señala hacia el lado derecho.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "afuera"
+     }
+    },
+    {
+     "t": 0.5,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "afuera",
+      "offset": [
+       -0.12,
+       0,
+       0.05
+      ]
+     }
+    }
+   ],
+   "duracion": 0.5,
+   "sinonimos": [
+    "ellos"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "ella",
+   "glosa": "ELLA",
+   "categoria": "pronombres",
+   "descripcion_movimiento": "Índice extendido señala hacia el lado, desplazándose en arco.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "afuera",
+      "offset": [
+       0.04,
+       0,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.5,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "afuera",
+      "offset": [
+       -0.12,
+       0,
+       0.08
+      ]
+     }
+    }
+   ],
+   "duracion": 0.5,
+   "sinonimos": [
+    "ellas"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "nosotros",
+   "glosa": "NOSOTROS",
+   "categoria": "pronombres",
+   "descripcion_movimiento": "Índice describe un semicírculo de un hombro al otro sobre el pecho.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "1",
+      "loc": "hombro",
+      "palma": "adentro",
+      "dedos": "adentro",
+      "offset": [
+       0,
+       -0.02,
+       0.06
+      ]
+     }
+    },
+    {
+     "t": 0.4,
+     "R": {
+      "shape": "1",
+      "loc": "pecho",
+      "palma": "adentro",
+      "dedos": "adentro",
+      "offset": [
+       0,
+       0,
+       0.12
+      ]
+     }
+    },
+    {
+     "t": 0.8,
+     "R": {
+      "shape": "1",
+      "loc": "hombro",
+      "palma": "adentro",
+      "dedos": "adentro",
+      "offset": [
+       0.34,
+       -0.02,
+       0.06
+      ]
+     }
+    }
+   ],
+   "duracion": 0.8,
+   "sinonimos": [
+    "nosotras"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "ustedes",
+   "glosa": "USTEDES",
+   "categoria": "pronombres",
+   "descripcion_movimiento": "Índice al frente realiza un barrido horizontal.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0.1,
+       0,
+       0.05
+      ]
+     }
+    },
+    {
+     "t": 0.8,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       -0.15,
+       0,
+       0.05
+      ]
+     }
+    }
+   ],
+   "duracion": 0.8,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "ayer",
+   "glosa": "AYER",
+   "categoria": "tiempo",
+   "descripcion_movimiento": "Mano en Y junto a la mejilla; el pulgar toca y se mueve hacia atrás.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_Y",
+      "loc": "mejilla",
+      "palma": "adentro",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "LSM_Y",
+      "loc": "mejilla",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       -0.03,
+       0.02,
+       -0.08
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "mañana",
+   "glosa": "MAÑANA",
+   "categoria": "tiempo",
+   "descripcion_movimiento": "Mano en A junto a la mejilla; avanza hacia adelante en arco.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_A",
+      "loc": "mejilla",
+      "palma": "lado",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "LSM_A",
+      "loc": "mejilla",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       -0.03,
+       0,
+       0.14
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "hoy",
+   "glosa": "HOY",
+   "categoria": "tiempo",
+   "descripcion_movimiento": "Ambas manos en Y, palmas arriba, bajan simultáneamente frente al cuerpo.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_Y",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.08,
+       0
+      ]
+     },
+     "L": {
+      "shape": "LSM_Y",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.08,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "LSM_Y",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0,
+       -0.04,
+       0
+      ]
+     },
+     "L": {
+      "shape": "LSM_Y",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0,
+       -0.04,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "antes",
+   "glosa": "ANTES",
+   "categoria": "tiempo",
+   "descripcion_movimiento": "Mano plana sobre el hombro, palma hacia atrás; se mueve hacia atrás.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "plana",
+      "loc": "hombro",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0.05,
+       0.1
+      ]
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "plana",
+      "loc": "hombro",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0.08,
+       -0.02
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [
+    "pasado"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "futuro",
+   "glosa": "FUTURO",
+   "categoria": "tiempo",
+   "descripcion_movimiento": "Mano plana junto a la sien avanza hacia adelante en arco.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "plana",
+      "loc": "sien",
+      "palma": "lado",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.7,
+     "R": {
+      "shape": "plana",
+      "loc": "sien",
+      "palma": "lado",
+      "dedos": "frente",
+      "offset": [
+       -0.05,
+       0.02,
+       0.22
+      ]
+     }
+    }
+   ],
+   "duracion": 0.7,
+   "sinonimos": [
+    "despues",
+    "después",
+    "luego"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "ahora",
+   "glosa": "AHORA",
+   "categoria": "tiempo",
+   "descripcion_movimiento": "Ambas manos en Y, palmas arriba, bajan con un pequeño golpe.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_Y",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.05,
+       0
+      ]
+     },
+     "L": {
+      "shape": "LSM_Y",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.05,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.4,
+     "R": {
+      "shape": "LSM_Y",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0,
+       -0.03,
+       0
+      ]
+     },
+     "L": {
+      "shape": "LSM_Y",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0,
+       -0.03,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.4,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "hablar",
+   "glosa": "HABLAR",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Índice frente a la boca, palma al lado, oscila hacia adelante repetidamente.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "1",
+      "loc": "boca",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.04
+      ]
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "1",
+      "loc": "boca",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.1
+      ],
+      "mov": {
+       "tipo": "oscilar",
+       "eje": [
+        0,
+        0,
+        1
+       ]
+      }
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [
+    "decir",
+    "platicar"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "escuchar",
+   "glosa": "ESCUCHAR",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Mano curva detrás de la oreja, palma al frente.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "curva",
+      "loc": "oreja",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       -0.02
+      ]
+     }
+    },
+    {
+     "t": 0.7,
+     "R": {
+      "shape": "curva",
+      "loc": "oreja",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       -0.02,
+       0,
+       0.0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.7,
+   "sinonimos": [
+    "oir",
+    "oír"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "leer",
+   "glosa": "LEER",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Mano en V, palma abajo, recorre la palma de la mano izquierda plana de arriba hacia abajo.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_V",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.1,
+       0.02
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.8,
+     "R": {
+      "shape": "LSM_V",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       -0.0,
+       0.02
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "arriba"
+     }
+    }
+   ],
+   "duracion": 0.8,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "escribir",
+   "glosa": "ESCRIBIR",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Mano en pinza escribe con trazos sobre la palma izquierda, palma arriba.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "pinza",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0.02,
+       0.05,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0.03,
+       0,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "pinza",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       -0.06,
+       0.05,
+       0
+      ],
+      "mov": {
+       "tipo": "oscilar",
+       "eje": [
+        1,
+        0,
+        0
+       ]
+      }
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0.03,
+       0,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "explicar",
+   "glosa": "EXPLICAR",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Ambas manos en F, palmas enfrentadas, se mueven alternadamente adelante y atrás.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_F",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente"
+     },
+     "L": {
+      "shape": "LSM_F",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente"
+     }
+    },
+    {
+     "t": 1.0,
+     "R": {
+      "shape": "LSM_F",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente",
+      "mov": {
+       "tipo": "oscilar",
+       "eje": [
+        0,
+        0,
+        1
+       ]
+      }
+     },
+     "L": {
+      "shape": "LSM_F",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente",
+      "mov": {
+       "tipo": "oscilar",
+       "eje": [
+        0,
+        0,
+        -1
+       ]
+      }
+     }
+    }
+   ],
+   "duracion": 1.0,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "jugar",
+   "glosa": "JUGAR",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Ambas manos en Y oscilan girando la muñeca.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_Y",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "arriba"
+     },
+     "L": {
+      "shape": "LSM_Y",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 1.0,
+     "R": {
+      "shape": "LSM_Y",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "mov": {
+       "tipo": "oscilar"
+      }
+     },
+     "L": {
+      "shape": "LSM_Y",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "mov": {
+       "tipo": "oscilar"
+      }
+     }
+    }
+   ],
+   "duracion": 1.0,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "contar",
+   "glosa": "CONTAR",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Mano en pinza recorre la palma izquierda abierta hacia arriba.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "pinza",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.02,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.8,
+     "R": {
+      "shape": "pinza",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.12,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "arriba"
+     }
+    }
+   ],
+   "duracion": 0.8,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "borrar",
+   "glosa": "BORRAR",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Mano en A frota sobre la palma izquierda con movimiento circular.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_A",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.04,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente"
+     }
+    },
+    {
+     "t": 1.0,
+     "R": {
+      "shape": "LSM_A",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.04,
+       0
+      ],
+      "mov": {
+       "tipo": "circulo"
+      }
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente"
+     }
+    }
+   ],
+   "duracion": 1.0,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "apartar",
+   "glosa": "APARTAR",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Mano plana, palma al lado, empuja hacia afuera.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "afuera",
+      "dedos": "frente",
+      "offset": [
+       0.05,
+       0,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "afuera",
+      "dedos": "frente",
+      "offset": [
+       -0.15,
+       0,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [
+    "separar",
+    "quitar"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "pasear",
+   "glosa": "PASEAR",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Índice y medio en V hacia abajo caminan avanzando.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_V",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "abajo",
+      "offset": [
+       0,
+       0,
+       0
+      ]
+     }
+    },
+    {
+     "t": 1.0,
+     "R": {
+      "shape": "LSM_V",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "abajo",
+      "offset": [
+       0,
+       0,
+       0.15
+      ],
+      "mov": {
+       "tipo": "oscilar"
+      }
+     }
+    }
+   ],
+   "duracion": 1.0,
+   "sinonimos": [
+    "caminar",
+    "andar"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "saltar",
+   "glosa": "SALTAR",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Mano en V invertida salta sobre la palma izquierda.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_V",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "abajo",
+      "offset": [
+       0,
+       0.05,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0,
+       -0.03,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.4,
+     "R": {
+      "shape": "LSM_V",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "abajo",
+      "offset": [
+       0,
+       0.17,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0,
+       -0.03,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.8,
+     "R": {
+      "shape": "LSM_V",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "abajo",
+      "offset": [
+       0,
+       0.05,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0,
+       -0.03,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.8,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "pensar",
+   "glosa": "PENSAR",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Índice toca la sien y describe un pequeño círculo.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "1",
+      "loc": "sien",
+      "palma": "adentro",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "1",
+      "loc": "sien",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "mov": {
+       "tipo": "circulo"
+      }
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [
+    "creer",
+    "idea"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "saber",
+   "glosa": "SABER",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Yemas de la mano plana tocan la frente dos veces.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "plana",
+      "loc": "frente",
+      "palma": "adentro",
+      "dedos": "lado",
+      "offset": [
+       0,
+       0,
+       0.04
+      ]
+     }
+    },
+    {
+     "t": 0.3,
+     "R": {
+      "shape": "plana",
+      "loc": "frente",
+      "palma": "adentro",
+      "dedos": "lado"
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "plana",
+      "loc": "frente",
+      "palma": "adentro",
+      "dedos": "lado",
+      "offset": [
+       0,
+       0,
+       0.04
+      ]
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "plana",
+      "loc": "frente",
+      "palma": "adentro",
+      "dedos": "lado"
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [
+    "conocer"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "entender",
+   "glosa": "ENTENDER",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Índice junto a la sien se extiende desde el puño hacia arriba.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "puño",
+      "loc": "sien",
+      "palma": "adentro",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.5,
+     "R": {
+      "shape": "1",
+      "loc": "sien",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0.03,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.5,
+   "sinonimos": [
+    "comprender"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "ver",
+   "glosa": "VER",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Mano en V sale desde los ojos hacia adelante, palma al cuerpo.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_V",
+      "loc": "ojo",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.04
+      ]
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "LSM_V",
+      "loc": "ojo",
+      "palma": "adentro",
+      "dedos": "frente",
+      "offset": [
+       0,
+       -0.03,
+       0.22
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [
+    "mirar",
+    "observar"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "querer",
+   "glosa": "QUERER",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Mano en 5 garra, palma arriba, se cierra atrayéndose hacia el cuerpo.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "5",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0,
+       0.1
+      ]
+     }
+    },
+    {
+     "t": 0.7,
+     "R": {
+      "shape": "5_garra",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0,
+       0.0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.7,
+   "sinonimos": [
+    "desear"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "amar",
+   "glosa": "AMAR",
+   "categoria": "sentimientos",
+   "descripcion_movimiento": "Ambas manos en puño cruzadas sobre el pecho.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "puño",
+      "loc": "pecho",
+      "palma": "adentro",
+      "dedos": "lado",
+      "offset": [
+       0.03,
+       0.02,
+       0.06
+      ]
+     },
+     "L": {
+      "shape": "puño",
+      "loc": "pecho",
+      "palma": "adentro",
+      "dedos": "lado",
+      "offset": [
+       0.03,
+       0.02,
+       0.06
+      ]
+     }
+    },
+    {
+     "t": 0.8,
+     "R": {
+      "shape": "puño",
+      "loc": "pecho",
+      "palma": "adentro",
+      "dedos": "lado",
+      "offset": [
+       0.05,
+       0.02,
+       0.03
+      ]
+     },
+     "L": {
+      "shape": "puño",
+      "loc": "pecho",
+      "palma": "adentro",
+      "dedos": "lado",
+      "offset": [
+       0.05,
+       0.02,
+       0.03
+      ]
+     }
+    }
+   ],
+   "duracion": 0.8,
+   "sinonimos": [
+    "amor",
+    "te quiero"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "ayudar",
+   "glosa": "AYUDAR",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Mano en A con pulgar arriba sobre la palma izquierda; ambas suben juntas.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "pulgar",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.03,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0.05,
+       -0.02,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.7,
+     "R": {
+      "shape": "pulgar",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.15,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       0.05,
+       0.1,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.7,
+   "sinonimos": [
+    "ayuda",
+    "apoyar"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "trabajar",
+   "glosa": "TRABAJAR",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Ambos puños, palmas abajo; el derecho golpea dos veces sobre el izquierdo.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "puño",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.1,
+       0
+      ]
+     },
+     "L": {
+      "shape": "puño",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente"
+     }
+    },
+    {
+     "t": 0.3,
+     "R": {
+      "shape": "puño",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.04,
+       0
+      ]
+     },
+     "L": {
+      "shape": "puño",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente"
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "puño",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.1,
+       0
+      ]
+     },
+     "L": {
+      "shape": "puño",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente"
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "puño",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.04,
+       0
+      ]
+     },
+     "L": {
+      "shape": "puño",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente"
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [
+    "trabajo"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "estudiar",
+   "glosa": "ESTUDIAR",
+   "categoria": "escuela",
+   "descripcion_movimiento": "Mano en 5 con dedos hacia la palma izquierda, los dedos oscilan.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "5",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.08,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente"
+     }
+    },
+    {
+     "t": 1.0,
+     "R": {
+      "shape": "5_garra",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.08,
+       0
+      ],
+      "mov": {
+       "tipo": "oscilar"
+      }
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente"
+     }
+    }
+   ],
+   "duracion": 1.0,
+   "sinonimos": [
+    "aprender"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "comer",
+   "glosa": "COMER",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Mano en bolsa toca los labios repetidamente.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "bolsa",
+      "loc": "boca",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.06
+      ]
+     }
+    },
+    {
+     "t": 0.3,
+     "R": {
+      "shape": "bolsa",
+      "loc": "boca",
+      "palma": "adentro",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "bolsa",
+      "loc": "boca",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.06
+      ]
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "bolsa",
+      "loc": "boca",
+      "palma": "adentro",
+      "dedos": "arriba"
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [
+    "comida"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "beber",
+   "glosa": "BEBER",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Mano en C como sosteniendo un vaso se inclina hacia la boca.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "curva",
+      "loc": "barbilla",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       -0.05,
+       0.08
+      ]
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "curva",
+      "loc": "boca",
+      "palma": "lado",
+      "dedos": "adentro",
+      "offset": [
+       0,
+       0,
+       0.04
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [
+    "tomar"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "dormir",
+   "glosa": "DORMIR",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Mano plana junto a la mejilla, cabeza ligeramente inclinada.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "plana",
+      "loc": "mejilla",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       -0.02,
+       0,
+       0.03
+      ]
+     }
+    },
+    {
+     "t": 0.8,
+     "R": {
+      "shape": "plana",
+      "loc": "mejilla",
+      "palma": "adentro",
+      "dedos": "arriba"
+     }
+    }
+   ],
+   "duracion": 0.8,
+   "sinonimos": [
+    "sueño"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "ir",
+   "glosa": "IR",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Índice señala hacia adelante desplazándose lejos del cuerpo.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0,
+       -0.05
+      ]
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.02,
+       0.18
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "venir",
+   "glosa": "VENIR",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Índice al frente se desplaza hacia el cuerpo.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.02,
+       0.18
+      ]
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       -0.04
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "necesitar",
+   "glosa": "NECESITAR",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Mano en X baja dos veces frente al cuerpo.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_X",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.06,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.3,
+     "R": {
+      "shape": "LSM_X",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "LSM_X",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.06,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "LSM_X",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente"
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [
+    "necesidad",
+    "deber"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "poder",
+   "glosa": "PODER",
+   "categoria": "verbos",
+   "descripcion_movimiento": "Ambos puños bajan con fuerza frente al cuerpo.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "puño",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.08,
+       0
+      ]
+     },
+     "L": {
+      "shape": "puño",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.08,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.5,
+     "R": {
+      "shape": "puño",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       -0.04,
+       0
+      ]
+     },
+     "L": {
+      "shape": "puño",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       -0.04,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.5,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "qué",
+   "glosa": "QUÉ",
+   "categoria": "preguntas",
+   "descripcion_movimiento": "Ambas manos en 5, palmas arriba, oscilan lateralmente con expresión interrogativa.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "5",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente"
+     },
+     "L": {
+      "shape": "5",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente"
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "5",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "mov": {
+       "tipo": "oscilar"
+      }
+     },
+     "L": {
+      "shape": "5",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "mov": {
+       "tipo": "oscilar"
+      }
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "dónde",
+   "glosa": "DÓNDE",
+   "categoria": "preguntas",
+   "descripcion_movimiento": "Índice extendido arriba oscila lateralmente.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0.08,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0.08,
+       0
+      ],
+      "mov": {
+       "tipo": "oscilar"
+      }
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "cómo",
+   "glosa": "CÓMO",
+   "categoria": "preguntas",
+   "descripcion_movimiento": "Ambas manos curvas, dorsos juntos, giran hacia afuera.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "curva",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente"
+     },
+     "L": {
+      "shape": "curva",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente"
+     }
+    },
+    {
+     "t": 0.7,
+     "R": {
+      "shape": "curva",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       -0.05,
+       0,
+       0
+      ]
+     },
+     "L": {
+      "shape": "curva",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       -0.05,
+       0,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.7,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "quién",
+   "glosa": "QUIÉN",
+   "categoria": "preguntas",
+   "descripcion_movimiento": "Índice frente a la boca describe pequeños círculos.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "1",
+      "loc": "boca",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.05
+      ]
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "1",
+      "loc": "boca",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.05
+      ],
+      "mov": {
+       "tipo": "circulo"
+      }
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "cuándo",
+   "glosa": "CUÁNDO",
+   "categoria": "preguntas",
+   "descripcion_movimiento": "Índice describe un círculo y toca la palma izquierda.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0.08,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente"
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0.08,
+       0
+      ],
+      "mov": {
+       "tipo": "circulo"
+      }
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente"
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.02,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente"
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "sí",
+   "glosa": "SÍ",
+   "categoria": "respuestas",
+   "descripcion_movimiento": "Mano en S se mueve arriba y abajo como asintiendo.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_S",
+      "loc": "neutral",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0.06,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "LSM_S",
+      "loc": "neutral",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0.06,
+       0
+      ],
+      "mov": {
+       "tipo": "oscilar",
+       "eje": [
+        0,
+        1,
+        0
+       ]
+      }
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [
+    "si"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "no",
+   "glosa": "NO",
+   "categoria": "respuestas",
+   "descripcion_movimiento": "Índice extendido, palma al frente, oscila de lado a lado.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0.08,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0.08,
+       0
+      ],
+      "mov": {
+       "tipo": "oscilar"
+      }
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "familia",
+   "glosa": "FAMILIA",
+   "categoria": "personas",
+   "descripcion_movimiento": "Ambas manos en F se tocan al frente y describen un círculo hasta unirse por el meñique.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_F",
+      "loc": "neutral",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       0.04,
+       0,
+       0
+      ]
+     },
+     "L": {
+      "shape": "LSM_F",
+      "loc": "neutral",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       0.04,
+       0,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.5,
+     "R": {
+      "shape": "LSM_F",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       -0.08,
+       0,
+       0.08
+      ]
+     },
+     "L": {
+      "shape": "LSM_F",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       -0.08,
+       0,
+       0.08
+      ]
+     }
+    },
+    {
+     "t": 1.0,
+     "R": {
+      "shape": "LSM_F",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       0.03,
+       0,
+       0.12
+      ]
+     },
+     "L": {
+      "shape": "LSM_F",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       0.03,
+       0,
+       0.12
+      ]
+     }
+    }
+   ],
+   "duracion": 1.0,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "amigo",
+   "glosa": "AMIGO",
+   "categoria": "personas",
+   "descripcion_movimiento": "Índices en gancho se entrelazan frente al cuerpo.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_X",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "lado",
+      "offset": [
+       -0.05,
+       0.04,
+       0
+      ]
+     },
+     "L": {
+      "shape": "LSM_X",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "lado",
+      "offset": [
+       -0.05,
+       0,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "LSM_X",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "lado",
+      "offset": [
+       0.02,
+       0.02,
+       0
+      ]
+     },
+     "L": {
+      "shape": "LSM_X",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "lado",
+      "offset": [
+       0.02,
+       0,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [
+    "amiga",
+    "amistad"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "mamá",
+   "glosa": "MAMÁ",
+   "categoria": "personas",
+   "descripcion_movimiento": "Mano en 5, pulgar toca la barbilla dos veces.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "5",
+      "loc": "barbilla",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.04
+      ]
+     }
+    },
+    {
+     "t": 0.3,
+     "R": {
+      "shape": "5",
+      "loc": "barbilla",
+      "palma": "lado",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "5",
+      "loc": "barbilla",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.04
+      ]
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "5",
+      "loc": "barbilla",
+      "palma": "lado",
+      "dedos": "arriba"
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [
+    "madre"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "papá",
+   "glosa": "PAPÁ",
+   "categoria": "personas",
+   "descripcion_movimiento": "Mano en 5, pulgar toca la frente dos veces.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "5",
+      "loc": "frente",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.04
+      ]
+     }
+    },
+    {
+     "t": 0.3,
+     "R": {
+      "shape": "5",
+      "loc": "frente",
+      "palma": "lado",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "5",
+      "loc": "frente",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.04
+      ]
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "5",
+      "loc": "frente",
+      "palma": "lado",
+      "dedos": "arriba"
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [
+    "padre"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "maestro",
+   "glosa": "MAESTRO",
+   "categoria": "escuela",
+   "descripcion_movimiento": "Ambas manos en bolsa junto a las sienes se abren hacia adelante.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "bolsa",
+      "loc": "sien",
+      "palma": "adentro",
+      "dedos": "arriba"
+     },
+     "L": {
+      "shape": "bolsa",
+      "loc": "sien",
+      "palma": "adentro",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "5",
+      "loc": "sien",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.15
+      ]
+     },
+     "L": {
+      "shape": "5",
+      "loc": "sien",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.15
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [
+    "maestra",
+    "profesor",
+    "profesora",
+    "enseñar"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "escuela",
+   "glosa": "ESCUELA",
+   "categoria": "escuela",
+   "descripcion_movimiento": "Manos planas aplauden dos veces, la derecha sobre la izquierda.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.08,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente"
+     }
+    },
+    {
+     "t": 0.3,
+     "R": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.02,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente"
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.08,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente"
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "abajo",
+      "dedos": "frente",
+      "offset": [
+       0,
+       0.02,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente"
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [
+    "clase"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "casa",
+   "glosa": "CASA",
+   "categoria": "lugares",
+   "descripcion_movimiento": "Manos planas se tocan por las yemas formando un techo y bajan separándose.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "lado",
+      "offset": [
+       0.06,
+       0.12,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "lado",
+      "offset": [
+       0.06,
+       0.12,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.7,
+     "R": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       -0.06,
+       0.0,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       -0.06,
+       0.0,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.7,
+   "sinonimos": [
+    "hogar"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "libro",
+   "glosa": "LIBRO",
+   "categoria": "escuela",
+   "descripcion_movimiento": "Manos planas juntas por las palmas se abren como un libro.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente",
+      "offset": [
+       0.05,
+       0,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente",
+      "offset": [
+       0.05,
+       0,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.7,
+     "R": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       -0.02,
+       0,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "arriba",
+      "dedos": "frente",
+      "offset": [
+       -0.02,
+       0,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.7,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "agua",
+   "glosa": "AGUA",
+   "categoria": "alimentos",
+   "descripcion_movimiento": "Mano en W toca la barbilla dos veces.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_W",
+      "loc": "barbilla",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.04
+      ]
+     }
+    },
+    {
+     "t": 0.3,
+     "R": {
+      "shape": "LSM_W",
+      "loc": "barbilla",
+      "palma": "lado",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "LSM_W",
+      "loc": "barbilla",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.04
+      ]
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "LSM_W",
+      "loc": "barbilla",
+      "palma": "lado",
+      "dedos": "arriba"
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "leche",
+   "glosa": "LECHE",
+   "categoria": "alimentos",
+   "descripcion_movimiento": "Mano en C se cierra en puño repetidamente, como ordeñando.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "curva",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.3,
+     "R": {
+      "shape": "puño",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       -0.02,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "curva",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "puño",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       -0.02,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "sordo",
+   "glosa": "SORDO",
+   "categoria": "personas",
+   "descripcion_movimiento": "Índice toca la oreja y después la boca.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "1",
+      "loc": "oreja",
+      "palma": "adentro",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "1",
+      "loc": "boca",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.02
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [
+    "sorda",
+    "sordos"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "oyente",
+   "glosa": "OYENTE",
+   "categoria": "personas",
+   "descripcion_movimiento": "Índice junto a la oreja describe un pequeño círculo.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "1",
+      "loc": "oreja",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       -0.02,
+       0,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.8,
+     "R": {
+      "shape": "1",
+      "loc": "oreja",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       -0.02,
+       0,
+       0
+      ],
+      "mov": {
+       "tipo": "circulo"
+      }
+     }
+    }
+   ],
+   "duracion": 0.8,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "lengua de señas",
+   "glosa": "SEÑA",
+   "categoria": "comunicación",
+   "descripcion_movimiento": "Ambos índices extendidos giran alternadamente en círculos frente al cuerpo.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "frente",
+      "dedos": "lado",
+      "offset": [
+       0,
+       0.05,
+       0
+      ]
+     },
+     "L": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "frente",
+      "dedos": "lado",
+      "offset": [
+       0,
+       0.05,
+       0
+      ]
+     }
+    },
+    {
+     "t": 1.2,
+     "R": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "frente",
+      "dedos": "lado",
+      "offset": [
+       0,
+       0.05,
+       0
+      ],
+      "mov": {
+       "tipo": "circulo"
+      }
+     },
+     "L": {
+      "shape": "1",
+      "loc": "neutral",
+      "palma": "frente",
+      "dedos": "lado",
+      "offset": [
+       0,
+       0.05,
+       0
+      ],
+      "mov": {
+       "tipo": "circulo"
+      }
+     }
+    }
+   ],
+   "duracion": 1.2,
+   "sinonimos": [
+    "seña",
+    "señas",
+    "señar",
+    "lsm"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "nombre",
+   "glosa": "NOMBRE",
+   "categoria": "comunicación",
+   "descripcion_movimiento": "Mano en H toca dos veces sobre la mano izquierda en H, en cruz.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_H",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "lado",
+      "offset": [
+       0,
+       0.06,
+       0
+      ]
+     },
+     "L": {
+      "shape": "LSM_H",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "lado"
+     }
+    },
+    {
+     "t": 0.3,
+     "R": {
+      "shape": "LSM_H",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "lado",
+      "offset": [
+       0,
+       0.02,
+       0
+      ]
+     },
+     "L": {
+      "shape": "LSM_H",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "lado"
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "LSM_H",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "lado",
+      "offset": [
+       0,
+       0.06,
+       0
+      ]
+     },
+     "L": {
+      "shape": "LSM_H",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "lado"
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "LSM_H",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "lado",
+      "offset": [
+       0,
+       0.02,
+       0
+      ]
+     },
+     "L": {
+      "shape": "LSM_H",
+      "loc": "neutral",
+      "palma": "adentro",
+      "dedos": "lado"
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [
+    "llamar",
+    "llamo",
+    "llamas"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "teléfono",
+   "glosa": "TELÉFONO",
+   "categoria": "objetos",
+   "descripcion_movimiento": "Mano en Y junto a la oreja, como sosteniendo un auricular.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "llamar",
+      "loc": "oreja",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       -0.03,
+       0,
+       0.02
+      ]
+     }
+    },
+    {
+     "t": 0.8,
+     "R": {
+      "shape": "llamar",
+      "loc": "oreja",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       -0.03,
+       0,
+       0.02
+      ]
+     }
+    }
+   ],
+   "duracion": 0.8,
+   "sinonimos": [
+    "celular",
+    "llamada"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "feliz",
+   "glosa": "FELIZ",
+   "categoria": "sentimientos",
+   "descripcion_movimiento": "Ambas manos planas sobre el pecho suben alternadamente.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "plana",
+      "loc": "pecho",
+      "palma": "adentro",
+      "dedos": "lado",
+      "offset": [
+       0,
+       -0.04,
+       0.03
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "pecho",
+      "palma": "adentro",
+      "dedos": "lado",
+      "offset": [
+       0,
+       0.04,
+       0.03
+      ]
+     }
+    },
+    {
+     "t": 0.5,
+     "R": {
+      "shape": "plana",
+      "loc": "pecho",
+      "palma": "adentro",
+      "dedos": "lado",
+      "offset": [
+       0,
+       0.04,
+       0.03
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "pecho",
+      "palma": "adentro",
+      "dedos": "lado",
+      "offset": [
+       0,
+       -0.04,
+       0.03
+      ]
+     }
+    },
+    {
+     "t": 1.0,
+     "R": {
+      "shape": "plana",
+      "loc": "pecho",
+      "palma": "adentro",
+      "dedos": "lado",
+      "offset": [
+       0,
+       -0.04,
+       0.03
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "pecho",
+      "palma": "adentro",
+      "dedos": "lado",
+      "offset": [
+       0,
+       0.04,
+       0.03
+      ]
+     }
+    }
+   ],
+   "duracion": 1.0,
+   "sinonimos": [
+    "alegre",
+    "contento",
+    "contenta",
+    "alegria",
+    "felicidad"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "triste",
+   "glosa": "TRISTE",
+   "categoria": "sentimientos",
+   "descripcion_movimiento": "Ambas manos en 5 garra frente a la cara bajan lentamente.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "5_garra",
+      "loc": "ojo",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.1
+      ]
+     },
+     "L": {
+      "shape": "5_garra",
+      "loc": "ojo",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       0,
+       0.1
+      ]
+     }
+    },
+    {
+     "t": 0.9,
+     "R": {
+      "shape": "5_garra",
+      "loc": "barbilla",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       -0.08,
+       0.12
+      ]
+     },
+     "L": {
+      "shape": "5_garra",
+      "loc": "barbilla",
+      "palma": "adentro",
+      "dedos": "arriba",
+      "offset": [
+       0,
+       -0.08,
+       0.12
+      ]
+     }
+    }
+   ],
+   "duracion": 0.9,
+   "sinonimos": [
+    "tristeza"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "mucho",
+   "glosa": "MUCHO",
+   "categoria": "cantidades",
+   "descripcion_movimiento": "Ambas manos en garra se separan hacia los lados.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "5_garra",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente",
+      "offset": [
+       0.05,
+       0,
+       0
+      ]
+     },
+     "L": {
+      "shape": "5_garra",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente",
+      "offset": [
+       0.05,
+       0,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "5",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente",
+      "offset": [
+       -0.1,
+       0,
+       0
+      ]
+     },
+     "L": {
+      "shape": "5",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente",
+      "offset": [
+       -0.1,
+       0,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [
+    "muchos",
+    "muchas",
+    "bastante"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "grande",
+   "glosa": "GRANDE",
+   "categoria": "cualidades",
+   "descripcion_movimiento": "Manos curvas enfrentadas se separan.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "curva",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       0.04,
+       0,
+       0
+      ]
+     },
+     "L": {
+      "shape": "curva",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       0.04,
+       0,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "curva",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       -0.12,
+       0,
+       0
+      ]
+     },
+     "L": {
+      "shape": "curva",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "arriba",
+      "offset": [
+       -0.12,
+       0,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "pequeño",
+   "glosa": "PEQUEÑO",
+   "categoria": "cualidades",
+   "descripcion_movimiento": "Manos planas enfrentadas se acercan.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente",
+      "offset": [
+       -0.06,
+       0,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente",
+      "offset": [
+       -0.06,
+       0,
+       0
+      ]
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente",
+      "offset": [
+       0.04,
+       0,
+       0
+      ]
+     },
+     "L": {
+      "shape": "plana",
+      "loc": "neutral",
+      "palma": "lado",
+      "dedos": "frente",
+      "offset": [
+       0.04,
+       0,
+       0
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [
+    "chico",
+    "chica",
+    "poco"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "méxico",
+   "glosa": "MÉXICO",
+   "categoria": "lugares",
+   "descripcion_movimiento": "Mano en M junto a la sien gira hacia adelante.",
+   "keyframes": [
+    {
+     "t": 0,
+     "R": {
+      "shape": "LSM_M",
+      "loc": "sien",
+      "palma": "adentro",
+      "dedos": "arriba"
+     }
+    },
+    {
+     "t": 0.6,
+     "R": {
+      "shape": "LSM_M",
+      "loc": "sien",
+      "palma": "frente",
+      "dedos": "arriba",
+      "offset": [
+       -0.03,
+       0,
+       0.06
+      ]
+     }
+    }
+   ],
+   "duracion": 0.6,
+   "sinonimos": [
+    "mexicano",
+    "mexicana"
+   ],
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "baño",
+   "glosa": "BAÑO",
+   "categoria": "lugares",
+   "descripcion_movimiento": "Mano en forma de T agita de lado a lado frente al cuerpo.",
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "dinero",
+   "glosa": "DINERO",
+   "categoria": "objetos",
+   "descripcion_movimiento": "Mano en bolsa frota las yemas con el pulgar en el espacio neutral, palma arriba, agita.",
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "frío",
+   "glosa": "FRÍO",
+   "categoria": "clima",
+   "descripcion_movimiento": "Ambas manos en puño frente al pecho se sacuden, palmas al cuerpo.",
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "doctor",
+   "glosa": "DOCTOR",
+   "categoria": "personas",
+   "descripcion_movimiento": "Mano en forma de D toca la muñeca izquierda dos veces, palma abajo.",
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "carro",
+   "glosa": "CARRO",
+   "categoria": "transporte",
+   "descripcion_movimiento": "Ambas manos en puño frente al cuerpo giran como sosteniendo un volante, movimiento circular.",
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  },
+  {
+   "termino": "café",
+   "glosa": "CAFÉ",
+   "categoria": "alimentos",
+   "descripcion_movimiento": "Mano en forma de C frente a la boca, palma al lado, mueve hacia adelante.",
+   "fuente_oficial": "Descripción adaptada para el prototipo a partir del Diccionario de LSM 'Manos con Voz' (SEP/CONAPRED, 2011) y del vocabulario de ProyectoLSM; requiere validación por intérprete",
+   "imagen_url": null,
+   "vigencia": "2011",
+   "revisado_por_interprete": false
+  }
+ ]
+}

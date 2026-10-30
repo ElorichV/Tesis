@@ -8,3 +8,4 @@ models/*.joblib
 models/mediapipe/*.task
 data/*.csv
 
+data/external/

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Avatar LSM — Tesis</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
+  </script>
+</head>
+<body>
+  <div id="viewport"></div>
+  <aside id="panel">
+    <h1>Avatar LSM</h1>
+    <form id="form">
+      <textarea id="text" rows="3" placeholder="Escribe una frase en español…">Hola, mi nombre es Ana. ¿Cómo estás?</textarea>
+      <div class="row">
+        <button type="submit" id="play">Señar</button>
+        <button type="button" id="stop">Detener</button>
+      </div>
+    </form>
+    <label class="row">Velocidad <input type="range" id="speed" min="0.4" max="1.6" step="0.1" value="1"> <span id="speedv">1.0×</span></label>
+    <div id="gloss" class="box"><b>Glosa:</b> <span id="glossText">—</span></div>
+    <div id="current" class="box"><b>Seña actual:</b> <span id="currentText">—</span></div>
+    <details>
+      <summary>Alfabeto dactilológico</summary>
+      <div id="alphabet" class="chips"></div>
+    </details>
+    <details>
+      <summary>Léxico (<span id="lexCount">0</span> señas)</summary>
+      <div id="lexicon" class="chips"></div>
+    </details>
+    <details>
+      <summary>Configuraciones de mano</summary>
+      <div id="shapes" class="chips"></div>
+    </details>
+    <p class="note">Las palabras sin seña en el léxico se deletrean con el alfabeto manual LSM.</p>
+  </aside>
+  <div id="status">Cargando avatar…</div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

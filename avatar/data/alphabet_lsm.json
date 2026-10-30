@@ -1,0 +1,342 @@
+{
+ "descripcion": "Alfabeto manual LSM para el avatar. Las configuraciones LSM_* se entrenan con landmarks (avatar/train.py); los movimientos de letras dinámicas son trazos relativos a la posición de deletreo (metros).",
+ "fuente": "Alfabeto dactilológico de la LSM (Diccionario de LSM 'Manos con Voz', SEP/CONAPRED/Libre Acceso A.C., 2011)",
+ "letras": {
+  "A": {
+   "shape": "LSM_A",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": true
+  },
+  "B": {
+   "shape": "LSM_B",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": true
+  },
+  "C": {
+   "shape": "LSM_C",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": true
+  },
+  "D": {
+   "shape": "LSM_D",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": true
+  },
+  "E": {
+   "shape": "LSM_E",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": true
+  },
+  "F": {
+   "shape": "LSM_F",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": true
+  },
+  "I": {
+   "shape": "LSM_I",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": true
+  },
+  "L": {
+   "shape": "LSM_L",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": true
+  },
+  "O": {
+   "shape": "LSM_O",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": true
+  },
+  "R": {
+   "shape": "LSM_R",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": true
+  },
+  "S": {
+   "shape": "LSM_S",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": true
+  },
+  "T": {
+   "shape": "LSM_T",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": true
+  },
+  "U": {
+   "shape": "LSM_U",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": true
+  },
+  "V": {
+   "shape": "LSM_V",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": true
+  },
+  "W": {
+   "shape": "LSM_W",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": true
+  },
+  "Y": {
+   "shape": "LSM_Y",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": true
+  },
+  "G": {
+   "shape": "LSM_G",
+   "palma": "adentro",
+   "dedos": "lado",
+   "usar_orientacion_entrenada": false
+  },
+  "H": {
+   "shape": "LSM_H",
+   "palma": "adentro",
+   "dedos": "lado",
+   "usar_orientacion_entrenada": false
+  },
+  "M": {
+   "shape": "LSM_M",
+   "palma": "abajo",
+   "dedos": "abajo",
+   "usar_orientacion_entrenada": false
+  },
+  "N": {
+   "shape": "LSM_N",
+   "palma": "abajo",
+   "dedos": "abajo",
+   "usar_orientacion_entrenada": false
+  },
+  "P": {
+   "shape": "LSM_P",
+   "palma": "lado",
+   "dedos": "frente",
+   "usar_orientacion_entrenada": false
+  },
+  "J": {
+   "shape": "LSM_I",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": false,
+   "mov": {
+    "tipo": "trazo",
+    "puntos": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      -0.06,
+      0
+     ],
+     [
+      0.04,
+      -0.09,
+      0
+     ],
+     [
+      0.07,
+      -0.06,
+      0
+     ]
+    ]
+   }
+  },
+  "K": {
+   "shape": "LSM_K",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": false,
+   "mov": {
+    "tipo": "trazo",
+    "puntos": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0.07,
+      0
+     ]
+    ]
+   }
+  },
+  "Ñ": {
+   "shape": "LSM_N",
+   "palma": "abajo",
+   "dedos": "abajo",
+   "usar_orientacion_entrenada": false,
+   "mov": {
+    "tipo": "oscilar",
+    "eje": [
+     1,
+     0,
+     0
+    ]
+   }
+  },
+  "Q": {
+   "shape": "LSM_Q",
+   "palma": "abajo",
+   "dedos": "abajo",
+   "usar_orientacion_entrenada": false,
+   "mov": {
+    "tipo": "oscilar",
+    "eje": [
+     0,
+     0,
+     1
+    ]
+   }
+  },
+  "X": {
+   "shape": "LSM_X",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": false,
+   "mov": {
+    "tipo": "trazo",
+    "puntos": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0.06
+     ]
+    ]
+   }
+  },
+  "Z": {
+   "shape": "1",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": false,
+   "mov": {
+    "tipo": "trazo",
+    "puntos": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      -0.07,
+      0,
+      0
+     ],
+     [
+      0,
+      -0.07,
+      0
+     ],
+     [
+      -0.07,
+      -0.07,
+      0
+     ]
+    ]
+   }
+  },
+  "LL": {
+   "shape": "LSM_L",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": false,
+   "mov": {
+    "tipo": "trazo",
+    "puntos": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      -0.07,
+      0
+     ]
+    ]
+   }
+  },
+  "RR": {
+   "shape": "LSM_R",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": false,
+   "mov": {
+    "tipo": "trazo",
+    "puntos": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      -0.06,
+      0,
+      0
+     ]
+    ]
+   }
+  },
+  "NUM_1": {
+   "shape": "1",
+   "palma": "adentro",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": false
+  },
+  "NUM_2": {
+   "shape": "2",
+   "palma": "adentro",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": false
+  },
+  "NUM_3": {
+   "shape": "3",
+   "palma": "adentro",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": false
+  },
+  "NUM_4": {
+   "shape": "4",
+   "palma": "adentro",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": false
+  },
+  "NUM_5": {
+   "shape": "5",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": false
+  },
+  "NUM_0": {
+   "shape": "LSM_O",
+   "palma": "frente",
+   "dedos": "arriba",
+   "usar_orientacion_entrenada": false
+  }
+ }
+}

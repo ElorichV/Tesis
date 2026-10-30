@@ -476,7 +476,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_run.set_defaults(func=cmd_run)
 
+    p_avatar = subparsers.add_parser(
+        "avatar", help="Visor web del avatar 3D que interpreta texto en LSM"
+    )
+    p_avatar.add_argument("--host", default="127.0.0.1")
+    p_avatar.add_argument("--port", type=int, default=8765)
+    p_avatar.set_defaults(func=cmd_avatar)
+
     return parser
+
+
+def cmd_avatar(args: argparse.Namespace) -> int:
+    from avatar.server import serve
+
+    serve(args.host, args.port)
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:

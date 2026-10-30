@@ -1,0 +1,19 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; background: #1d2026; color: #e8e8ea; overflow: hidden; }
+#viewport { position: absolute; inset: 0 360px 0 0; }
+#panel { position: absolute; top: 0; right: 0; width: 360px; height: 100%; overflow-y: auto; padding: 16px; background: #262a32; border-left: 1px solid #383d48; }
+h1 { font-size: 20px; margin: 0 0 12px; }
+textarea { width: 100%; resize: vertical; padding: 8px; border-radius: 6px; border: 1px solid #454b58; background: #1d2026; color: inherit; font-size: 15px; }
+.row { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+button { flex: 1; padding: 8px 10px; border: 0; border-radius: 6px; background: #3f7be0; color: white; font-size: 15px; cursor: pointer; }
+button#stop { background: #555c6b; }
+.box { background: #1d2026; border-radius: 6px; padding: 8px; margin: 8px 0; font-size: 14px; line-height: 1.5; }
+details { margin: 10px 0; }
+summary { cursor: pointer; font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.chips span { padding: 3px 7px; border-radius: 4px; background: #343a46; font-size: 13px; cursor: pointer; }
+.chips span:hover { background: #3f7be0; }
+.note { font-size: 12px; color: #9aa0ab; }
+#status { position: absolute; left: 12px; bottom: 12px; font-size: 13px; color: #9aa0ab; }
+#current b, #gloss b { color: #9ec1ff; }
+@media (max-width: 800px) { #viewport { inset: 0 0 45% 0; } #panel { top: 55%; width: 100%; height: 45%; } }

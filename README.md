@@ -145,3 +145,37 @@ Ejecutar la suite de pruebas (normalización invariante de landmarks, trayectori
 2. **Generalización multi-usuario**: Recolectar muestras de 5–10 personas con distintas morfologías de mano y aplicar *data augmentation* geométrico (rotaciones 3D aleatorias de $\pm 15^\circ$ y ruido gaussiano en articulaciones) durante `train`.
 3. **Gramática de lengua de señas con Gemini**: Aprovechar los blendshapes faciales (cejas arriba = pregunta sí/no; cejas fruncidas = pregunta *wh-*) como metadatos textuales en el prompt de Gemini para reconstruir la entonación e interrogación al sintetizar la voz.
 
+
+
+## Avatar 3D en LSM (`avatar/`)
+
+Avatar de torso humano (complexión media, piel morena media) con brazos y manos rigueados que
+interpreta texto en español como Lengua de Señas Mexicana.
+
+```bash
+python -m app avatar            # visor en http://127.0.0.1:8765 (también: python -m avatar.server)
+```
+
+| Pieza | Archivo |
+|---|---|
+| Modelo + rig (54 huesos: columna, cuello, cabeza, clavículas, brazos con hueso de torsión, metacarpos y 3 falanges por dedo) generados por script en Blender 4.2 | `avatar/blender/build_avatar.py` → `avatar/web/assets/avatar.glb`, `avatar/data/rig_skeleton.json` |
+| Cinemática directa de la mano (21 puntos compatibles con MediaPipe) y rangos articulares naturales/hiperelásticos | `avatar/kinematics.py` |
+| "Entrenamiento": ajuste por mínimos cuadrados de ángulos articulares + orientación a landmarks reales | `avatar/train.py` → `avatar/data/handshapes_trained.json` |
+| Biblioteca de configuraciones (entrenadas + clasificadores LSM diseñados, incl. hiperextensión) | `avatar/handshapes.py` → `avatar/web/assets/handshapes.json` |
+| Texto → glosa LSM (tiempo al inicio, interrogativos al final, lematización) → señas o deletreo | `avatar/lexicon.py`, `avatar/data/lexicon_lsm.json`, `avatar/data/alphabet_lsm.json` |
+| Ingesta de diccionarios PDF (PyMuPDF) al formato del léxico | `avatar/ingest_pdf.py` |
+| Visor Three.js con IK de dos huesos, orientación de palma/dedos y reparto de pronación entre antebrazo y muñeca | `avatar/web/` |
+
+Regenerar el modelo: `blender -b -P avatar/blender/build_avatar.py -- --out avatar/web/assets/avatar.glb`.
+
+Reentrenar configuraciones: `python -m avatar.train --hf-asl --csv data/landmarks_static.csv --csv-alphabet LSM`
+(`--hf-asl` descarga el dataset público *ASL Static Landmarks v1*, CC-BY-4.0; el CSV propio sale de
+`python -m app collect`). Después: `python -m avatar.handshapes`.
+
+Ampliar el léxico desde un PDF: `python -m avatar.ingest_pdf diccionario.pdf --fuente "Manos con Voz (SEP/CONAPRED, 2011)"`.
+Las entradas sin `keyframes` se animan a partir de `descripcion_movimiento`.
+
+**Limitaciones.** Las configuraciones LSM se inicializan con landmarks de ASL donde la forma de la mano
+coincide; conviene recapturar el alfabeto LSM con `python -m app collect` y reentrenar. Las 80 señas del
+léxico son descripciones adaptadas (`revisado_por_interprete: false`) y deben validarse con
+intérpretes de LSM. No hay expresión facial (componente no manual).

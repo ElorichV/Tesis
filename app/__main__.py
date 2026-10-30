@@ -1,4 +1,4 @@
-"""Punto de entrada para `python -m app [collect|train|run]`."""
+"""Punto de entrada para `python -m app [collect|train|run|avatar]`."""
 
 from app.cli import main
 
