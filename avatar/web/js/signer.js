@@ -29,10 +29,10 @@ const DEG = Math.PI / 180;
 export const WRIST_LIMITS = { flex: 80, ext: 70, dev: 30, forearmTwist: 100, wristTwist: 10 };
 // Volúmenes de colisión del cuerpo (glTF, metros): las manos no pueden entrar en ellos.
 const BODY_VOLUMES = [
-  { c: V(0, 1.62, 0.012), r: V(0.088, 0.118, 0.108) },  // cabeza
-  { c: V(0, 1.48, 0.0), r: V(0.062, 0.07, 0.062) },     // cuello
-  { c: V(0, 1.28, 0.0), r: V(0.15, 0.15, 0.118) },      // pecho
-  { c: V(0, 1.07, 0.0), r: V(0.14, 0.15, 0.10) },       // abdomen
+  { c: V(0, 1.64, 0.045), r: V(0.09, 0.12, 0.105) },   // cabeza
+  { c: V(0, 1.49, 0.01), r: V(0.06, 0.07, 0.06) },     // cuello
+  { c: V(0, 1.28, 0.06), r: V(0.15, 0.15, 0.135) },     // pecho
+  { c: V(0, 1.07, 0.045), r: V(0.14, 0.15, 0.105) },    // abdomen
 ];
 const HAND_MARGIN = 0.018;
 const clampAbs = (v, m) => Math.max(-m, Math.min(m, v));

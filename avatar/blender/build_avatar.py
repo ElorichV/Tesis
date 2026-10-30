@@ -29,7 +29,7 @@ from pathlib import Path
 import bmesh
 import bpy
 import numpy as np
-from mathutils import Vector
+from mathutils import Matrix, Quaternion, Vector
 
 SKIN_SRGB = (0.60, 0.42, 0.33)      # Tono de piel medio (moreno)
 SHIRT_SRGB = (0.075, 0.085, 0.115)  # Ropa oscura lisa, como usan los intérpretes de LSM
@@ -105,19 +105,24 @@ def hand_frame(side: str):
     return u, v, n
 
 
-def build_bone_table() -> list[dict]:
+def build_bone_table(torso=None) -> list[dict]:
     """Devuelve la lista de huesos (nombre, padre, cabeza, cola) en coordenadas Blender."""
     bones: list[dict] = []
 
     def add(name, parent, head, tail):
         bones.append({"name": name, "parent": parent, "head": Vector(head), "tail": Vector(tail)})
 
-    add("hips", None, (0, 0, 0.95), (0, 0, 1.05))
-    add("spine", "hips", (0, 0, 1.05), (0, 0.005, 1.18))
-    add("spine1", "spine", (0, 0.005, 1.18), (0, 0.0, 1.31))
-    add("chest", "spine1", (0, 0.0, 1.31), (0, -0.005, 1.43))
-    add("neck", "chest", (0, -0.005, 1.43), (0, -0.012, 1.535))
-    add("head", "neck", (0, -0.012, 1.535), (0, -0.012, 1.76))
+    if torso:
+        for nm, par in (("hips", None), ("spine", "hips"), ("spine1", "spine"), ("chest", "spine1"),
+                        ("neck", "chest"), ("head", "neck")):
+            add(nm, par, torso[nm][0], torso[nm][1])
+    else:
+        add("hips", None, (0, 0, 0.95), (0, 0, 1.05))
+        add("spine", "hips", (0, 0, 1.05), (0, 0.005, 1.18))
+        add("spine1", "spine", (0, 0.005, 1.18), (0, 0.0, 1.31))
+        add("chest", "spine1", (0, 0.0, 1.31), (0, -0.005, 1.43))
+        add("neck", "chest", (0, -0.005, 1.43), (0, -0.012, 1.535))
+        add("head", "neck", (0, -0.012, 1.535), (0, -0.012, 1.76))
 
     for side in ("R", "L"):
         s = -1.0 if side == "R" else 1.0
@@ -125,7 +130,8 @@ def build_bone_table() -> list[dict]:
         elbow = Vector((0.428 * s, 0.0, 1.405))
         wrist = Vector((0.672 * s, 0.0, 1.405))
         mid = elbow.lerp(wrist, 0.5)
-        add(f"clavicle_{side}", "chest", (0.02 * s, -0.025, 1.395), shoulder)
+        clav = torso[f"clavicle_head_{side}"] if torso else (0.02 * s, -0.025, 1.395)
+        add(f"clavicle_{side}", "chest", clav, shoulder)
         add(f"upperarm_{side}", f"clavicle_{side}", shoulder, elbow)
         add(f"lowerarm_{side}", f"upperarm_{side}", elbow, mid)
         add(f"lowerarm_twist_{side}", f"lowerarm_{side}", mid, wrist)
@@ -508,8 +514,8 @@ def build_shirt(B, body):
         path = []
         for k in range(17):
             t = math.pi * k / 16
-            origin = Vector((0.086 * sx, -0.30 * math.cos(t), 1.30 + 0.30 * math.sin(t)))
-            target = Vector((0.086 * sx, 0.0, 1.30))
+            origin = Vector((0.086 * sx, -0.30 * math.cos(t), 1.34 + 0.30 * math.sin(t)))
+            target = Vector((0.086 * sx, 0.0, 1.34))
             loc, nrm, _, _ = bvh.ray_cast(origin, (target - origin).normalized())
             if loc is not None:
                 path.append(loc + nrm * 0.0045)
@@ -750,6 +756,277 @@ def hide_covered_skin(body, cloth, max_dist=0.03, keep_rings=2):
 
 
 # ---------------------------------------------------------------------------
+# Base realista MakeHuman (CC0): malla hm08 + targets de mujer joven, reposada al rig del avatar
+# ---------------------------------------------------------------------------
+
+MH_DIR = Path(__file__).resolve().parent / "makehuman"
+MH_TARGETS = (
+    ("universal-female-young-averagemuscle-averageweight", 1.0),
+    ("african-female-young", 0.35),       # mezcla mestiza: rasgos y tono medio
+    ("caucasian-female-young", 0.35),
+    ("asian-female-young", 0.30),
+    ("female-young-averagemuscle-averageweight-maxcup-averagefirmness", 0.5),
+    ("stomach-tone-incr", 0.4),
+)
+MH_FINGER = {"thumb": 1, "index": 2, "middle": 3, "ring": 4, "pinky": 5}
+
+
+def load_makehuman():
+    """Lee base.obj y aplica los targets; devuelve vértices (Blender, m), caras 'body' y articulaciones."""
+    verts, faces, groups, g = [], [], [], None
+    for line in open(MH_DIR / "base.obj", encoding="utf-8"):
+        if line.startswith("v "):
+            verts.append([float(x) for x in line.split()[1:4]])
+        elif line.startswith("g "):
+            g = line.split()[1]
+        elif line.startswith("f "):
+            faces.append([int(t.split("/")[0]) - 1 for t in line.split()[1:]])
+            groups.append(g)
+    V = np.array(verts)
+    for name, w in MH_TARGETS:
+        for line in open(MH_DIR / f"{name}.target", encoding="utf-8"):
+            p = line.split()
+            if p and not p[0].startswith("#"):
+                V[int(p[0])] += w * np.array([float(x) for x in p[1:4]])
+    jv = {}
+    for f, gr in zip(faces, groups):
+        if gr.startswith("joint-"):
+            jv.setdefault(gr[6:], set()).update(f)
+    J = {k: V[list(ix)].mean(0) for k, ix in jv.items()}
+    ground = J["ground"][1]
+    scale = 1.405 / (J["r-shoulder"][1] - ground)  # hombros a la altura del rig
+
+    def conv(p):
+        return np.array([p[0] * scale, -p[2] * scale, (p[1] - ground) * scale])
+
+    Vb = np.stack([V[:, 0] * scale, -V[:, 2] * scale, (V[:, 1] - ground) * scale], 1)
+    body = [f for f, gr in zip(faces, groups) if gr == "body"]
+    eye = {s: Vb[list({i for f, gr in zip(faces, groups) if gr == f"helper-{s}-eye" for i in f})] for s in "lr"}
+    return Vb, body, {k: Vector(conv(p)) for k, p in J.items()}, eye
+
+
+def mh_source_bones(J):
+    """Huesos equivalentes del rig en la pose A de MakeHuman (cabeza, cola)."""
+    src = {"hips": ("pelvis", "spine-3"), "spine": ("spine-3", "spine-2"), "spine1": ("spine-2", "spine-1"),
+           "chest": ("spine-1", "neck"), "neck": ("neck", "head"), "head": ("head", "head-2")}
+    out = {k: (J[a], J[b]) for k, (a, b) in src.items()}
+    for side, m in (("R", "r"), ("L", "l")):
+        el, wr = J[f"{m}-elbow"], J[f"{m}-hand"]
+        out[f"clavicle_{side}"] = (J[f"{m}-clavicle"], J[f"{m}-shoulder"])
+        out[f"upperarm_{side}"] = (J[f"{m}-shoulder"], el)
+        out[f"lowerarm_{side}"] = (el, el.lerp(wr, 0.5))
+        out[f"lowerarm_twist_{side}"] = (el.lerp(wr, 0.5), wr)
+        out[f"hand_{side}"] = (wr, J[f"{m}-finger-3-1"])
+        for f, k in MH_FINGER.items():
+            j = [J[f"{m}-finger-{k}-{i}"] for i in range(1, 5)]
+            if f == "thumb":
+                for i in range(3):
+                    out[f"thumb_0{i + 1}_{side}"] = (j[i], j[i + 1])
+            else:
+                out[f"meta_{f}_{side}"] = (wr, j[0])
+                for i in range(3):
+                    out[f"{f}_0{i + 1}_{side}"] = (j[i], j[i + 1])
+    return out
+
+
+def mh_torso_overrides(J):
+    """Columna, cuello y cabeza del rig tomados de la anatomía MakeHuman (los brazos quedan igual)."""
+    src = mh_source_bones(J)
+    o = {k: src[k] for k in ("hips", "spine", "spine1", "chest", "neck", "head")}
+    for side, m in (("R", "r"), ("L", "l")):
+        o[f"clavicle_head_{side}"] = J[f"{m}-clavicle"]
+    return o
+
+
+def retarget_to_rig(obj, src, bones):
+    """Reposa la malla de la pose A de MakeHuman a la pose T del rig: cada hueso temporal se alinea
+    (posición, dirección y longitud) con el hueso del rig; la mano conserva palma abajo y pulgar al frente."""
+    arm = bpy.data.armatures.new("MHRig")
+    tmp = bpy.data.objects.new("MHRig", arm)
+    bpy.context.collection.objects.link(tmp)
+    bpy.context.view_layer.objects.active = tmp
+    bpy.ops.object.mode_set(mode="EDIT")
+    for b in bones:
+        eb = arm.edit_bones.new(b["name"])
+        eb.head, eb.tail = src[b["name"]]
+        eb.inherit_scale = "NONE"
+    for b in bones:
+        if b["parent"]:
+            arm.edit_bones[b["name"]].parent = arm.edit_bones[b["parent"]]
+    bpy.ops.object.mode_set(mode="OBJECT")
+    names = {b["name"] for b in bones}
+    heat_weights(tmp, obj, names)
+    finalize_weights(obj, [{"name": n, "head": src[n][0], "tail": src[n][1], "parent": None} for n in names],
+                     names, smooth_repeat=2)
+    dst = {b["name"]: b for b in bones}
+    R = {}
+    for b in bones:  # orden padre -> hijo
+        n = b["name"]
+        h0, t0 = src[n]
+        d0 = (t0 - h0).normalized()
+        d1 = (dst[n]["tail"] - dst[n]["head"]).normalized()
+        par = R.get(b["parent"], Quaternion())
+        if n.startswith("hand_"):
+            s = n[-1]
+            thumb_side = (src[f"meta_index_{s}"][1] - src[f"meta_pinky_{s}"][1])
+            v0 = (thumb_side - d0 * thumb_side.dot(d0)).normalized()
+            m0 = Matrix((d0, v0, d0.cross(v0)))
+            u, v, nrm = hand_frame(s)
+            m1 = Matrix((d1, (v - d1 * v.dot(d1)).normalized(), d1.cross(v).normalized()))
+            q = (m1.transposed() @ m0).to_quaternion()
+        else:
+            q = (par @ d0).rotation_difference(d1) @ par
+        R[n] = q
+        pb = tmp.pose.bones[n]
+        rest = tmp.data.bones[n].matrix_local
+        ratio = (dst[n]["tail"] - dst[n]["head"]).length / max((t0 - h0).length, 1e-6)
+        rot = q.to_matrix().to_4x4() @ rest.to_3x3().to_4x4()
+        pb.matrix = Matrix.Translation(dst[n]["head"]) @ rot @ Matrix.Diagonal((1.0, ratio, 1.0, 1.0))
+        bpy.context.view_layer.update()
+    mod = obj.modifiers.new("retarget", "ARMATURE")
+    mod.object = tmp
+    bpy.ops.object.select_all(action="DESELECT")
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    for md in list(obj.modifiers):
+        obj.modifiers.remove(md)
+    obj.parent = None
+    bpy.data.objects.remove(tmp, do_unlink=True)  # los grupos (mismos nombres que el rig) se conservan
+
+
+def build_mh_body(B, bones, mh):
+    """Cuerpo realista (cabeza, torso, brazos y manos) a partir de MakeHuman, en la pose del rig."""
+    V, faces, J, _ = mh
+    me = bpy.data.meshes.new("Body")
+    me.from_pydata([tuple(p) for p in V], [], faces)
+    obj = bpy.data.objects.new("Body", me)
+    bpy.context.collection.objects.link(obj)
+    cut_and_relax(obj, lambda p: False, relax=0)  # quita vértices sueltos (ayudantes)
+    retarget_to_rig(obj, mh_source_bones(J), bones)
+    cut_and_relax(obj, lambda p: p.z < 0.74, relax=4)
+    apply_modifier(obj, "SUBSURF", levels=1, render_levels=1)
+    set_smooth(obj)
+    return obj
+
+
+def mh_face_details(body, mh):
+    """Ojos, cejas y pestañas sobre la cara MakeHuman."""
+    from mathutils.bvhtree import BVHTree
+
+    _, _, J, eye = mh
+    bvh = BVHTree.FromObject(body, bpy.context.evaluated_depsgraph_get())
+    details = []
+    for s, m in ((-1, "r"), (1, "l")):
+        pts = eye[m]
+        # La cabeza no se reposa (columna del rig = columna MakeHuman), así que el ojo queda donde está.
+        ec = Vector(pts.mean(0))
+        er = float(np.ptp(pts[:, 0])) * 0.5 * 0.97
+        details.append(("eye_white", hull_object(f"eye_{s}", [sphere_pts(ec, er)])))
+        details.append(("iris", hull_object(f"iris_{s}", [ellipsoid_pts(ec + Vector((0, -er * 0.86, 0)),
+                                                                          (er * 0.50, er * 0.18, er * 0.50))])))
+        details.append(("pupil", hull_object(f"pupil_{s}", [ellipsoid_pts(ec + Vector((0, -er * 0.98, 0)),
+                                                                            (er * 0.22, er * 0.08, er * 0.22))])))
+        details.append(("eye_white", hull_object(f"glint_{s}", [sphere_pts(ec + Vector((0.18 * er * s, -er * 1.0, er * 0.25)),
+                                                                            er * 0.07)])))
+        brow = []
+        for k in range(6):
+            x = ec.x + s * er * (-0.9 + 0.55 * k)
+            z = ec.z + er * (1.25 + 0.30 * math.sin(math.pi * (k + 0.6) / 6.2))
+            hit = bvh.ray_cast(Vector((x, -0.5, z)), Vector((0, 1, 0)))
+            if hit[0] is not None:
+                brow.append(sphere_pts(hit[0] + Vector((0, -0.0006, 0)), er * (0.12 - 0.012 * k)))
+        details.append(("brow", hull_object(f"brow_{s}", brow)))
+    for _, o in details:
+        set_smooth(o)
+    return details
+
+
+def paint_lips(body, mh, lip_index):
+    """Asigna el material de labios a las caras de la boca de la malla MakeHuman."""
+    mid = [v.co for v in body.data.vertices if abs(v.co.x) < 0.004 and v.co.z > 1.45]
+    tip = min(mid, key=lambda co: co.y)  # punta de la nariz
+    mz = tip.z - 0.032
+    front = min(co.y for co in mid if abs(co.z - mz) < 0.015)
+    for p in body.data.polygons:
+        c = p.center
+        if c.y < front + 0.011 and (c.x / 0.023) ** 2 + ((c.z - mz) / 0.0125) ** 2 < 1.0:
+            p.material_index = lip_index
+
+
+def strap_objects(body):
+    """Tirantes delgados que recorren el hombro pegados a la piel."""
+    from mathutils.bvhtree import BVHTree
+    bvh = BVHTree.FromObject(body, bpy.context.evaluated_depsgraph_get())
+    straps = []
+    for sx in (-1, 1):
+        path = []
+        for k in range(17):
+            t = math.pi * k / 16
+            origin = Vector((0.086 * sx, -0.30 * math.cos(t), 1.34 + 0.30 * math.sin(t)))
+            target = Vector((0.086 * sx, 0.0, 1.34))
+            loc, nrm, _, _ = bvh.ray_cast(origin, (target - origin).normalized())
+            if loc is not None:
+                path.append(loc + nrm * 0.0045)
+        straps += [capsule(f"strap_{sx}_{k}", a, b, 0.0032, 0.0032) for k, (a, b) in enumerate(zip(path, path[1:]))]
+    return straps
+
+
+def mh_cloth(body, name, keep, offset, thickness, straps=False):
+    """Prenda ajustada: copia de la piel (con sus pesos) recortada, separada `offset` y con grosor."""
+    obj = body.copy()
+    obj.data = body.data.copy()
+    obj.name = obj.data.name = name
+    bpy.context.collection.objects.link(obj)
+    for md in list(obj.modifiers):
+        obj.modifiers.remove(md)
+    obj.data.materials.clear()
+    for p in obj.data.polygons:
+        p.material_index = 0
+    cut_and_relax(obj, lambda p: not keep(p), relax=16)
+    apply_modifier(obj, "SMOOTH", factor=0.5, iterations=10)  # la tela no copia relieves finos de la piel
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.normal_update()
+    for v in bm.verts:
+        v.co += v.normal * offset
+    bm.to_mesh(obj.data)
+    bm.free()
+    apply_modifier(obj, "SMOOTH", factor=0.3, iterations=2)
+    apply_modifier(obj, "SOLIDIFY", thickness=thickness, offset=1.0, use_rim=True, thickness_clamp=1.0)
+    if straps:
+        st = strap_objects(body)
+        bones_in = [g.name for g in obj.vertex_groups]
+        for o in st:
+            for nm in bones_in:
+                o.vertex_groups.new(name=nm)
+        merged = join_objects(st, "Straps")
+        copy_weights(obj, merged)
+        obj = join_objects([obj, merged], name)
+    set_smooth(obj)
+    return obj
+
+
+def fit_to_head(obj, mh_head):
+    """Escala y coloca piezas diseñadas para la cabeza procedural (cabello, aretes) sobre la cabeza MakeHuman."""
+    k, c = mh_head
+    for v in obj.data.vertices:
+        v.co = c + (v.co - HEAD_C) * k
+
+
+def mh_head_frame(body, J):
+    co = np.array([v.co[:] for v in body.data.vertices])
+    eye_z = J["l-eye"].z
+    sk = co[(co[:, 2] > eye_z) & (np.abs(co[:, 0]) < 0.12)]
+    half_w = float(np.abs(sk[:, 0]).max())
+    yf, yb, zt = float(sk[:, 1].min()), float(sk[:, 1].max()), float(sk[:, 2].max())
+    k = 0.5 * (half_w / 0.074 + (yb - yf) / (2 * 0.093))
+    c = Vector((0.0, (yf + yb) / 2 - 0.010 * k, zt - 0.118 * k))
+    print(f"[avatar] Cabeza MakeHuman: escala {k:.3f}, centro {tuple(round(x, 3) for x in c)}")
+    return k, c
+
+
+# ---------------------------------------------------------------------------
 # Principal
 # ---------------------------------------------------------------------------
 
@@ -761,10 +1038,13 @@ def main(argv):
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="avatar/web/assets/avatar.glb")
     ap.add_argument("--skeleton", default="avatar/data/rig_skeleton.json")
+    ap.add_argument("--base", choices=("makehuman", "procedural"), default="makehuman",
+                    help="makehuman: malla realista CC0 reposada al rig; procedural: formas generadas por script")
     args = ap.parse_args(argv)
 
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    bones = build_bone_table()
+    mh = load_makehuman() if args.base == "makehuman" else None
+    bones = build_bone_table(mh_torso_overrides(mh[2]) if mh else None)
     B = {b["name"]: b for b in bones}
 
     mats = {
@@ -803,56 +1083,90 @@ def main(argv):
         body_bones |= {f"clavicle_{s}", f"upperarm_{s}", f"lowerarm_{s}", f"lowerarm_twist_{s}", f"hand_{s}"}
 
     meshes = []
-    body = build_body(B)
-    body.data.materials.append(mats["skin"])
-    heat_weights(rig, body, body_bones)
-    finalize_weights(body, bones, body_bones, smooth_repeat=3)
-    meshes.append(body)
+    if mh:
+        all_bones = {b["name"] for b in bones}
+        body = build_mh_body(B, bones, mh)
+        body.data.materials.append(mats["skin"])
+        body.data.materials.append(mats["lip"])
+        paint_lips(body, mh, 1)
+        # Pesos de calor calculados en la pose A (brazos separados del torso) y heredados por la subdivisión.
+        finalize_weights(body, bones, all_bones, smooth_repeat=2)
+        meshes.append(body)
 
-    shirt = build_shirt(B, body)
-    shirt.data.materials.append(mats["shirt"])
-    copy_weights(body, shirt)
-    finalize_weights(shirt, bones, body_bones, smooth_repeat=1)
-    meshes.append(shirt)
+        def top(p):
+            neckline = 1.375 - (0.035 * max(0.0, 1 - abs(p.x) / 0.07) if p.y < 0 else 0.0)
+            return 1.035 < p.z < neckline and abs(p.x) < 0.2 and not (abs(p.x) > 0.14 and p.z > 1.28)
 
-    for s in ("R", "L"):
-        hand = build_hand(B, s)
-        hand.data.materials.append(mats["skin"])
-        allowed = {b["name"] for b in bones if b["name"].endswith("_" + s) and
-                   b["name"].startswith(("hand", "thumb", "meta", *FINGERS))}
-        allowed.add(f"lowerarm_twist_{s}")
-        heat_weights(rig, hand, allowed)
-        finalize_weights(hand, bones, allowed, smooth_repeat=1)
-        wrist = B[f"hand_{s}"]["head"]
-        u = hand_frame(s)[0]
-        # Junto a la muñeca, la mano usa exactamente los pesos de la piel del antebrazo (sin costura).
-        copy_weights(body, hand, factor=lambda co, w=wrist, u=u: float(np.clip(1.0 - ((co - w).dot(u) + 0.004) / 0.018, 0, 1)))
-        finalize_weights(hand, bones, allowed | body_bones, smooth_repeat=0)
-        meshes.append(hand)
-        nails = build_nails(B, s)
-        nails.data.materials.append(mats["nail"])
-        assign_weights(nails, bones, {f"thumb_03_{s}"} | {f"{f}_03_{s}" for f in FINGERS}, power=12.0)
-        meshes.append(nails)
+        shirt = mh_cloth(body, "Shirt", top, 0.006, 0.0022, straps=True)
+        pants = mh_cloth(body, "Pants", lambda p: p.z < 0.985 and abs(p.x) < 0.3, 0.005, 0.003)
+        for c in (shirt, pants):
+            c.data.materials.append(mats["shirt"])
+            finalize_weights(c, bones, all_bones, smooth_repeat=1)
+            meshes.append(c)
+            hide_covered_skin(body, c)
+        details = mh_face_details(body, mh)
+        frame = mh_head_frame(body, mh[2])
+        hair, earrings = build_hair(), build_earrings()
+        fit_to_head(hair, frame)
+        fit_to_head(earrings, frame)
+        hair.data.materials.append(mats["hair"])
+        earrings.data.materials.append(mats["metal"])
+        for kind, o in details:
+            o.data.materials.append(mats[kind])
+        for o in [*[o for _, o in details], hair, earrings]:
+            assign_weights(o, bones, {"head"}, fixed="head")
+            meshes.append(o)
+    else:
+        body = build_body(B)
+        body.data.materials.append(mats["skin"])
+        heat_weights(rig, body, body_bones)
+        finalize_weights(body, bones, body_bones, smooth_repeat=3)
+        meshes.append(body)
 
-    pants = build_pants(B)
-    pants.data.materials.append(mats["shirt"])
-    copy_weights(body, pants)
-    finalize_weights(pants, bones, body_bones, smooth_repeat=1)
-    meshes.append(pants)
+        shirt = build_shirt(B, body)
+        shirt.data.materials.append(mats["shirt"])
+        copy_weights(body, shirt)
+        finalize_weights(shirt, bones, body_bones, smooth_repeat=1)
+        meshes.append(shirt)
 
-    hide_covered_skin(body, shirt)
-    hide_covered_skin(body, pants)
+        for s in ("R", "L"):
+            hand = build_hand(B, s)
+            hand.data.materials.append(mats["skin"])
+            allowed = {b["name"] for b in bones if b["name"].endswith("_" + s) and
+                       b["name"].startswith(("hand", "thumb", "meta", *FINGERS))}
+            allowed.add(f"lowerarm_twist_{s}")
+            heat_weights(rig, hand, allowed)
+            finalize_weights(hand, bones, allowed, smooth_repeat=1)
+            wrist = B[f"hand_{s}"]["head"]
+            u = hand_frame(s)[0]
+            # Junto a la muñeca, la mano usa exactamente los pesos de la piel del antebrazo (sin costura).
+            copy_weights(body, hand, factor=lambda co, w=wrist, u=u: float(np.clip(1.0 - ((co - w).dot(u) + 0.004) / 0.018, 0, 1)))
+            finalize_weights(hand, bones, allowed | body_bones, smooth_repeat=0)
+            meshes.append(hand)
+            nails = build_nails(B, s)
+            nails.data.materials.append(mats["nail"])
+            assign_weights(nails, bones, {f"thumb_03_{s}"} | {f"{f}_03_{s}" for f in FINGERS}, power=12.0)
+            meshes.append(nails)
 
-    head, details = build_head(B)
-    head.data.materials.append(mats["skin"])
-    rigid = [head, *[o for _, o in details], build_hair(), build_earrings()]
-    for kind, o in details:
-        o.data.materials.append(mats[kind])
-    rigid[-2].data.materials.append(mats["hair"])
-    rigid[-1].data.materials.append(mats["metal"])
-    for o in rigid:
-        assign_weights(o, bones, {"head"}, fixed="head")
-        meshes.append(o)
+        pants = build_pants(B)
+        pants.data.materials.append(mats["shirt"])
+        copy_weights(body, pants)
+        finalize_weights(pants, bones, body_bones, smooth_repeat=1)
+        meshes.append(pants)
+
+        hide_covered_skin(body, shirt)
+        hide_covered_skin(body, pants)
+
+        head, details = build_head(B)
+        head.data.materials.append(mats["skin"])
+        rigid = [head, *[o for _, o in details], build_hair(), build_earrings()]
+        for kind, o in details:
+            o.data.materials.append(mats[kind])
+        rigid[-2].data.materials.append(mats["hair"])
+        rigid[-1].data.materials.append(mats["metal"])
+        for o in rigid:
+            assign_weights(o, bones, {"head"}, fixed="head")
+            meshes.append(o)
 
     for m in meshes:
         m.parent = rig

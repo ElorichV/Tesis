@@ -154,8 +154,14 @@ labios llenos, clavículas marcadas, bob corto azul despeinado con raya al lado 
 top negro de tirantes y pantalón negro) con
 brazos y manos rigueados que interpreta texto en español como Lengua de Señas Mexicana.
 
-- **Malla:** formas base → unión volumétrica (voxel remesh) → retopología 100 % quads (QuadriFlow) →
-  subdivisión Catmull-Clark; ~139 k caras. Cortes de ropa y cabello con bordes relajados.
+- **Malla (por defecto `--base makehuman`):** cuerpo y cara realistas a partir de la malla base de
+  [MakeHuman](https://github.com/makehumancommunity/makehuman) (CC0, ver
+  `avatar/blender/makehuman/LICENSE.ASSETS.md`) con targets de mujer joven mezclados. La columna,
+  cuello y cabeza del rig se colocan en las articulaciones de MakeHuman; brazos y manos se reposan de
+  la pose A a la pose T del rig (cada hueso se alinea en posición, dirección y longitud). Los pesos
+  de calor se calculan en la pose A, con los brazos separados del torso. El top y el pantalón son
+  copias suavizadas de la piel, con sus mismos pesos. Unas 123 k caras, GLB de ~6.5 MB.
+  `--base procedural` conserva la malla anterior hecha por script (voxel remesh + QuadriFlow).
 - **Pesos sin deformaciones:** bone heat + suavizado laplaciano sobre aristas, máx. 4 influencias por
   vértice y normalizados; la blusa copia los pesos de la piel y la piel cubierta se elimina para
   evitar que atraviese la ropa. `tests/test_avatar.py` verifica influencias y huesos del GLB.
