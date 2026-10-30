@@ -10,27 +10,58 @@ export const isSupported = () => Boolean(Recognition);
 
 /**
  * @param {{
- *   onPartial: (text: string) => void,  // texto acumulado mientras habla
- *   onSilence: () => void,              // dejó de hablar
- *   onError: (reason: 'denied'|'error') => void
+ *   onPartial: (text: string, isFinal: boolean) => void,
+ *   onSilence: () => void,
+ *   onEnd: () => void,
+ *   onError: (reason: 'denied'|'nomic'|'network'|'nospeech'|'aborted'|'error') => void
  * }} handlers
- * @returns {() => void} función para detener
+ * @returns {() => void} detiene el reconocimiento e ignora eventos posteriores
  */
-export function startDictation({ onPartial, onSilence, onError }) {
+export function startDictation({ onPartial, onSilence, onEnd, onError }) {
   const rec = new Recognition();
   rec.lang = 'es-MX';
   rec.interimResults = true;
   rec.continuous = false;
+  let stopped = false;
 
   rec.addEventListener('result', (event) => {
-    const text = Array.from(event.results).map((r) => r[0].transcript).join(' ').trim();
-    onPartial(text);
+    if (stopped) return;
+    const results = Array.from(event.results);
+    const text = results.map((result) => result[0].transcript).join(' ').trim();
+    onPartial(text, Boolean(results[results.length - 1]?.isFinal));
   });
-  rec.addEventListener('speechend', onSilence);
+  rec.addEventListener('speechend', () => {
+    if (!stopped) onSilence();
+  });
+  rec.addEventListener('end', () => {
+    if (!stopped) onEnd?.();
+  });
   rec.addEventListener('error', (event) => {
-    onError(event.error === 'not-allowed' || event.error === 'service-not-allowed' ? 'denied' : 'error');
+    if (stopped) return;
+    const reasons = {
+      'not-allowed': 'denied',
+      'service-not-allowed': 'denied',
+      'audio-capture': 'nomic',
+      network: 'network',
+      'no-speech': 'nospeech',
+      aborted: 'aborted',
+    };
+    const reason = Object.prototype.hasOwnProperty.call(reasons, event.error)
+      ? reasons[event.error]
+      : 'error';
+    onError(reason);
   });
 
-  rec.start();
-  return () => rec.abort();
+  try {
+    rec.start();
+  } catch {
+    stopped = true;
+    onError('error');
+  }
+
+  return () => {
+    if (stopped) return;
+    stopped = true;
+    rec.abort();
+  };
 }

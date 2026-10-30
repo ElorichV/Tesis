@@ -249,18 +249,43 @@ export function createController(store, { stageVideo, cameraVideo, stageAvatar }
     announce('Micrófono activo. Habla con frases cortas.');
 
     const handlers = {
-      onPartial: (text) => {
+      onPartial: (text, isFinal) => {
+        set({ draft: text });
         clearTimeout(timers.micEnd);
-        set({ draft: text, micPhase: 'speaking' });
+        if (isFinal) {
+          set({ micPhase: 'ending' });
+          timers.micEnd = setTimeout(finishDictation, CONFIG.AUTO_SEND_DELAY_MS);
+        } else {
+          set({ micPhase: 'speaking' });
+        }
       },
       onSilence: () => {
         set({ micPhase: 'ending' });
         timers.micEnd = setTimeout(finishDictation, CONFIG.AUTO_SEND_DELAY_MS);
       },
+      onEnd: () => {
+        if (isListening(get())) {
+          clearTimeout(timers.micEnd);
+          finishDictation();
+        }
+      },
       onError: (reason) => {
+        if (reason === 'aborted') return;
         stopDictation();
-        set({ mic: reason === 'denied' ? 'denied' : 'off', micPhase: null });
-        announce(reason === 'denied' ? 'Sin permiso para el micrófono.' : 'Se interrumpió el dictado.');
+        if (reason === 'denied') {
+          set({ mic: 'denied', micPhase: null });
+          showToast('Permite el micrófono en el candado de la barra de direcciones.', 'warn');
+          announce('Sin permiso para el micrófono.');
+        } else {
+          set({ mic: 'off', micPhase: null });
+          const messages = {
+            nospeech: 'No se escuchó nada. Intenta de nuevo.',
+            network: 'El dictado necesita conexión a internet (Chrome usa el servicio de Google). Escribe el mensaje o revisa tu conexión.',
+            nomic: 'No se encontró un micrófono. Revisa que esté conectado y permitido en Windows.',
+          };
+          if (messages[reason]) showToast(messages[reason], 'warn');
+          else announce('Se interrumpió el dictado.');
+        }
       },
     };
 
