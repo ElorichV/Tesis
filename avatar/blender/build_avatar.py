@@ -436,33 +436,33 @@ def build_hair():
                                        ellipsoid_pts(c + Vector((0, 0.018, 0.070)), (0.078, 0.090, 0.066))])]
     part = c + Vector((0.022, -0.020, 0.112))  # raya al lado
     # Mechones de la coronilla que caen desde la raya hacia la cara y los lados.
-    for k in range(12):
-        a = math.radians(-160 + 320 * k / 11)
+    for k in range(26):
+        a = math.radians(-160 + 320 * k / 25) + rnd.uniform(-0.04, 0.04)
         dirv = Vector((math.sin(a), -math.cos(a) * 0.9, 0))
         root = part + dirv * 0.012
         tip = c + Vector((0.088 * math.sin(a), -0.092 * math.cos(a), 0.010)) + j(0.010)
         if abs(math.degrees(a)) < 45:  # delante: termina sobre la frente, sin tapar los ojos
             tip = c + Vector((0.050 * math.sin(a) + 0.020, -0.093, 0.046)) + j(0.006)
         ctrl = (root + tip) * 0.5 + (tip - c).normalized() * 0.03 + Vector((0, 0, 0.02))
-        pieces.append(hair_strand(f"crown_{k}", root, ctrl, tip, 0.018, 0.003))
+        pieces.append(hair_strand(f"crown_{k}", root, ctrl, tip, rnd.uniform(0.010, 0.014), 0.0018))
     # Laterales y nuca hasta la mandíbula, con puntas abiertas.
-    for k in range(20):
-        a = math.radians(-118 + 236 * k / 19)
+    for k in range(46):
+        a = math.radians(-118 + 236 * k / 45) + rnd.uniform(-0.03, 0.03)
         rx, ry = 0.092 * math.sin(a), 0.098 * math.cos(a)
-        root = c + Vector((rx * 0.78, ry * 0.78 + 0.010, 0.066))
+        root = c + Vector((rx * 0.78, ry * 0.78 + 0.010, 0.066 + rnd.uniform(-0.012, 0.008)))
         low = -0.066 + rnd.uniform(-0.010, 0.012)
         tip = c + Vector((rx * 1.02, ry * 0.96 + 0.012, low)) + j(0.008) + Vector((rx, ry, 0)).normalized() * 0.010
         ctrl = c + Vector((rx * 1.16, ry * 1.10 + 0.010, 0.010)) + j(0.006)
-        pieces.append(hair_strand(f"side_{k}", root, ctrl, tip, 0.021, 0.0035))
+        pieces.append(hair_strand(f"side_{k}", root, ctrl, tip, rnd.uniform(0.011, 0.016), 0.0016))
     # Mechones sueltos (flyaways) para romper la silueta.
-    for k in range(10):
+    for k in range(22):
         a = math.radians(rnd.uniform(-120, 120))
         rx, ry = 0.095 * math.sin(a), 0.100 * math.cos(a)
         root = c + Vector((rx * 0.9, ry * 0.9, rnd.uniform(0.0, 0.05)))
         tip = root + Vector((rx, ry, 0)).normalized() * rnd.uniform(0.018, 0.03) + Vector((0, 0, rnd.uniform(-0.04, -0.01)))
-        pieces.append(hair_strand(f"fly_{k}", root, (root + tip) * 0.5 + j(0.006), tip, 0.006, 0.0015))
+        pieces.append(hair_strand(f"fly_{k}", root, (root + tip) * 0.5 + j(0.006), tip, 0.004, 0.0009))
     hair = join_objects(pieces, "Hair")
-    retopo(hair, voxel=0.0016, faces=20000, smooth_iters=5, smooth_factor=0.5, subdiv=0)
+    retopo(hair, voxel=0.0011, faces=34000, smooth_iters=3, smooth_factor=0.4, subdiv=0)
 
     def cut(co):
         p = co - c
@@ -653,7 +653,7 @@ def heat_weights(rig, obj, allowed):
     bpy.ops.object.parent_set(type="ARMATURE_AUTO")
     for g in list(obj.vertex_groups):
         if g.name not in allowed:
-            obj.vertex_groups.remove(g)
+            obj.vertex_groups.remove(obj.vertex_groups["_zone"])
 
 
 def finalize_weights(obj, bones, allowed, smooth_repeat=2, factor=0.5):
@@ -954,6 +954,30 @@ def paint_lips(body, mh, lip_index):
             p.material_index = lip_index
 
 
+def twist_gradient(obj, bones):
+    """Reparte el antebrazo entre `lowerarm` y `lowerarm_twist` a lo largo de su longitud, para que la
+    pronación/supinación se distribuya como en un antebrazo real (sin efecto de "envoltura de caramelo")."""
+    B = {b["name"]: b for b in bones}
+    G = {g.name: g.index for g in obj.vertex_groups}
+    for side in "RL":
+        lo, tw = f"lowerarm_{side}", f"lowerarm_twist_{side}"
+        if lo not in G or tw not in G:
+            continue
+        e, w = Vector(B[lo]["head"]), Vector(B[f"hand_{side}"]["head"])
+        ax = w - e
+        gl, gt = obj.vertex_groups[lo], obj.vertex_groups[tw]
+        for v in obj.data.vertices:
+            ws = {g.group: g.weight for g in v.groups}
+            tot = ws.get(G[lo], 0.0) + ws.get(G[tw], 0.0)
+            if tot <= 0:
+                continue
+            t = min(1.0, max(0.0, (v.co - e).dot(ax) / ax.length_squared))
+            u = min(1.0, max(0.0, (t - 0.1) / 0.85))
+            k = u * u * (3 - 2 * u)
+            gl.add([v.index], tot * (1 - k), "REPLACE")
+            gt.add([v.index], tot * k, "REPLACE")
+
+
 def strap_objects(body):
     """Tirantes delgados que recorren el hombro pegados a la piel."""
     from mathutils.bvhtree import BVHTree
@@ -972,7 +996,7 @@ def strap_objects(body):
     return straps
 
 
-def mh_cloth(body, name, keep, offset, thickness, straps=False):
+def mh_cloth(body, name, keep, offset, thickness, straps=False, smooth=10, zone=None):
     """Prenda ajustada: copia de la piel (con sus pesos) recortada, separada `offset` y con grosor."""
     obj = body.copy()
     obj.data = body.data.copy()
@@ -984,7 +1008,18 @@ def mh_cloth(body, name, keep, offset, thickness, straps=False):
     for p in obj.data.polygons:
         p.material_index = 0
     cut_and_relax(obj, lambda p: not keep(p), relax=16)
-    apply_modifier(obj, "SMOOTH", factor=0.5, iterations=10)  # la tela no copia relieves finos de la piel
+    apply_modifier(obj, "SMOOTH", factor=0.5, iterations=smooth)  # la tela no copia relieves finos de la piel
+    if zone:  # zona donde la prenda cae holgada (sin marcar el busto)
+        g = obj.vertex_groups.new(name="_zone")
+        for v in obj.data.vertices:
+            w = zone(v.co)
+            if w > 0:
+                g.add([v.index], w, "REPLACE")
+        mod = obj.modifiers.new("zone", "SMOOTH")
+        mod.factor, mod.iterations, mod.vertex_group = 0.8, 60, "_zone"
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        obj.vertex_groups.remove(obj.vertex_groups["_zone"])
     bm = bmesh.new()
     bm.from_mesh(obj.data)
     bm.normal_update()
@@ -1054,7 +1089,7 @@ def main(argv):
         "brow": make_material("Brow", BROW_SRGB, 0.6),
         "nail": make_material("Nail", NAIL_SRGB, 0.25),
         "eye_white": make_material("EyeWhite", (0.93, 0.92, 0.9), 0.15),
-        "iris": make_material("Iris", (0.42, 0.58, 0.82), 0.25),
+        "iris": make_material("Iris", (0.30, 0.17, 0.08), 0.25),  # café
         "pupil": make_material("Pupil", (0.01, 0.01, 0.01), 0.1),
         "lip": make_material("Lip", LIP_SRGB, 0.4),
         "metal": make_material("Metal", METAL_SRGB, 0.18, metallic=1.0),
@@ -1091,14 +1126,30 @@ def main(argv):
         paint_lips(body, mh, 1)
         # Pesos de calor calculados en la pose A (brazos separados del torso) y heredados por la subdivisión.
         finalize_weights(body, bones, all_bones, smooth_repeat=2)
+        twist_gradient(body, bones)
         meshes.append(body)
 
-        def top(p):
-            neckline = 1.375 - (0.035 * max(0.0, 1 - abs(p.x) / 0.07) if p.y < 0 else 0.0)
-            return 1.035 < p.z < neckline and abs(p.x) < 0.2 and not (abs(p.x) > 0.14 and p.z > 1.28)
+        wrist_x = abs(Vector(next(b for b in bones if b["name"] == "hand_R")["head"]).x) - 0.012
 
-        shirt = mh_cloth(body, "Shirt", top, 0.006, 0.0022, straps=True)
-        pants = mh_cloth(body, "Pants", lambda p: p.z < 0.985 and abs(p.x) < 0.3, 0.005, 0.003)
+        def sweater(p):
+            ax = abs(p.x)
+            if ax > 0.17:  # mangas largas hasta la muñeca
+                return ax < wrist_x
+            neck = 1.448 + 0.9 * max(0.0, ax - 0.05) - (0.012 if p.y < 0 else 0.0)  # cuello redondo
+            return 0.90 < p.z < neck
+
+        def loose(p):
+            return max(0.0, 1 - abs(p.x) / 0.16) * max(0.0, 1 - abs(p.z - 1.29) / 0.12)
+
+        shirt = mh_cloth(body, "Shirt", sweater, 0.007, 0.003, smooth=18, zone=loose)
+        pants = mh_cloth(body, "Pants", lambda p: p.z < 0.985 and abs(p.x) < 0.3, 0.004, 0.003)
+        def under_sweater(p):  # piel totalmente cubierta: se elimina para que nunca atraviese la tela
+            ax = abs(p.x)
+            if ax > 0.17:
+                return ax < wrist_x - 0.03
+            return 0.93 < p.z < 1.43 + 0.9 * max(0.0, ax - 0.05) - 0.03
+
+        cut_and_relax(body, under_sweater, relax=0)
         for c in (shirt, pants):
             c.data.materials.append(mats["shirt"])
             finalize_weights(c, bones, all_bones, smooth_repeat=1)

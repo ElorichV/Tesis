@@ -83,10 +83,35 @@ window.avatarPlay = play;
 window.avatarCamera = (x, y, z, tx, ty, tz) => { camera.position.set(x, y, z); controls.target.set(tx, ty, tz); controls.update(); renderer.render(scene, camera); };
 window.avatarDebug = () => ({ ready: !!signer, playing, clock, duration: timeline?.duration,
   clips: timeline?.clips.map(c => [c.t, c.label]) });
+// Diagnóstico: recorre la línea de tiempo a 60 fps y mide giros por fotograma de antebrazo y mano.
+window.avatarProbe = async (text) => {
+  const res = await translate(text);
+  const tl = buildTimeline(signer, res.secuencia);
+  const ang = q => 2 * Math.acos(Math.min(1, Math.abs(q.w))) * 180 / Math.PI;
+  const out = [], prev = {};
+  signer.prevTheta = null; signer.swivel = null; signer.prevTB = null; signer.prevWrist = null; signer.prevHandQ = null; signer.prevPerp = null;
+  for (let t = 0; t < tl.duration; t += 1 / 60) {
+    const poses = sampleTimeline(signer, tl, t);
+    signer.dt = 1 / 60; signer.apply(poses); signer.dt = 0;
+    for (const s of ['R', 'L']) {
+      const a = signer.arms[s];
+      const tw = signer.rest[a.twist.name].local.clone().invert().multiply(a.twist.quaternion);
+      const hd = signer.rest[a.hand.name].local.clone().invert().multiply(a.hand.quaternion);
+      const hw = a.hand.getWorldQuaternion(new THREE.Quaternion());
+      const lw = a.lower.getWorldQuaternion(new THREE.Quaternion());
+      const p = prev[s];
+      if (p) out.push({ t: +t.toFixed(3), s, label: poses.label, twist: ang(tw), wrist: ang(hd),
+        dHand: ang(p.hw.clone().invert().multiply(hw)), dLower: ang(p.lw.clone().invert().multiply(lw)),
+        dTwist: ang(p.tw.clone().invert().multiply(tw)) });
+      prev[s] = { hw, lw, tw };
+    }
+  }
+  return out;
+};
 window.avatarSeek = async (text, t) => {
   if (text !== null) { const res = await translate(text); timeline = buildTimeline(signer, res.secuencia); $('glossText').textContent = res.glosa; }
   playing = false; clock = t;
-  const poses = sampleTimeline(signer, timeline, t); signer.prevQ = null; signer.prevTheta = null; signer.apply(poses);
+  const poses = sampleTimeline(signer, timeline, t); signer.prevQ = null; signer.prevTheta = null; signer.swivel = null; signer.prevTB = null; signer.prevWrist = null; signer.prevHandQ = null; signer.prevPerp = null; signer.apply(poses);
   $('currentText').textContent = poses.label || '—';
   renderer.render(scene, camera);
   return poses.label;

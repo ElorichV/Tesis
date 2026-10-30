@@ -96,6 +96,7 @@ export class Signer {
         restPalm: V(0, -1, 0),
         palmOffset: p('middle_01').clone().sub(p('hand')).multiplyScalar(0.55),
         tipOffset: this.rest[`middle_03_${s}`].pos.clone().sub(p('hand')).multiplyScalar(1.08),
+        extraOffsets: ['thumb_03', 'index_03', 'pinky_03'].map(n => this.rest[`${n}_${s}`].pos.clone().sub(p('hand')).multiplyScalar(1.06)),
         palmContact: toLocal(p('middle_01').clone().lerp(p('hand'), 0.25).add(V(0, -0.025, 0))),
         tipContact: toLocal(this.rest[`index_03_${s}`].pos.clone().add(
           p('index_03').clone().sub(p('index_02')).normalize().multiplyScalar(0.02))),
@@ -174,14 +175,61 @@ export class Signer {
     return { pos, rot, shape, mov: h.mov };
   }
 
-  solveArm(side, wristTarget, handDelta) {
+  // Codo "vivo": como una persona, gira el brazo alrededor del eje hombro-muñeca (swivel) para que
+  // el antebrazo no tenga que torcerse más allá de lo anatómico. Se elige el swivel con menor
+  // torsión requerida, penalizando alejarse del anterior para que el codo se mueva con continuidad.
+  solveArmOrganic(side, wristTarget, handDelta) {
+    this.prevWrist = this.prevWrist || {};
+    const pw = this.prevWrist[side];
+    if (this.dt && pw) {  // velocidad máxima de la muñeca (~2.5 m/s): sin saltos al esquivar el cuerpo
+      const d = wristTarget.clone().sub(pw);
+      const maxD = 2.5 * this.dt;
+      if (d.length() > maxD) wristTarget = pw.clone().add(d.setLength(maxD));
+    }
+    this.prevWrist[side] = wristTarget.clone();
+    this.swivel = this.swivel || {};
+    const prev = this.swivel[side] ?? 0;
+    let best = prev, bestCost = Infinity;
+    for (let k = -6; k <= 6; k++) {
+      const phi = k * 10 * DEG;
+      const th = this.solveArm(side, wristTarget, handDelta, phi, false);
+      const cost = Math.abs(th) + 0.35 * Math.abs(phi) + 0.6 * Math.abs(phi - prev);
+      if (cost < bestCost) { bestCost = cost; best = phi; }
+    }
+    // Con dt (reproducción) el codo y la torsión cambian con velocidad acotada: sin chasquidos.
+    if (this.dt) best = prev + clampAbs(best - prev, 160 * DEG * this.dt);
+    this.swivel[side] = best;
+    this.solveArm(side, wristTarget, handDelta, best, true);
+  }
+
+  solveArm(side, wristTarget, handDelta, swivel = 0, commit = true) {
     const arm = this.arms[side];
     const S = arm.upper.getWorldPosition(new THREE.Vector3());
     let toT = wristTarget.clone().sub(S);
     const d = THREE.MathUtils.clamp(toT.length(), Math.abs(arm.a - arm.b) + 1e-3, arm.a + arm.b - 1e-3);
     const dir = toT.normalize();
-    const pole = mirrorVec(V(-0.55, -1.0, -0.25), side).normalize();
-    const perp = pole.sub(dir.clone().multiplyScalar(pole.dot(dir))).normalize();
+    const pole = mirrorVec(V(-0.55, -1.0, -0.25), side).normalize()
+      .applyAxisAngle(dir, side === 'L' ? -swivel : swivel);
+    // Si la muñeca queda casi en la línea del polo (mano junto a la oreja), el codo apunta hacia
+    // afuera y atrás de forma continua en lugar de voltearse.
+    const align = Math.abs(pole.dot(dir));
+    if (align > 0.6) {
+      const k = THREE.MathUtils.smoothstep(align, 0.6, 0.95);
+      pole.lerp(mirrorVec(V(-1.0, 0.0, -0.45), side).normalize(), k).normalize();
+    }
+    let perp = pole.sub(dir.clone().multiplyScalar(pole.dot(dir))).normalize();
+    // El plano del codo gira con velocidad acotada (~300°/s): el codo nunca salta de lado.
+    this.prevPerp = this.prevPerp || {};
+    const pp = this.prevPerp[side];
+    if (this.dt && pp) {
+      const ang = pp.angleTo(perp), maxA = 300 * DEG * this.dt;
+      if (ang > maxA) {
+        const axis = pp.clone().cross(perp);
+        if (axis.lengthSq() > 1e-10) perp = pp.clone().applyAxisAngle(axis.normalize(), maxA);
+        perp.sub(dir.clone().multiplyScalar(perp.dot(dir))).normalize();
+      }
+    }
+    if (commit) this.prevPerp[side] = perp.clone();
     const cosA = (arm.a * arm.a + d * d - arm.b * arm.b) / (2 * arm.a * d);
     const sinA = Math.sqrt(Math.max(0, 1 - cosA * cosA));
     const elbow = S.clone().add(dir.clone().multiplyScalar(arm.a * cosA)).add(perp.clone().multiplyScalar(arm.a * sinA));
@@ -223,14 +271,22 @@ export class Signer {
     const swing = X.clone().multiply(twFull.clone().invert());
     let theta = 2 * Math.atan2(twFull.y, twFull.w);
     theta = Math.atan2(Math.sin(theta), Math.cos(theta));
-    // Continuidad: elige la vuelta (±360°) más cercana al fotograma anterior para evitar volteos.
+    // Continuidad: cerca de ±180° conserva el lado del fotograma anterior (sin volteos de la mano).
     this.prevTheta = this.prevTheta || {};
     const prevT = this.prevTheta[side];
-    if (prevT !== undefined) theta += 2 * Math.PI * Math.round((prevT - theta) / (2 * Math.PI));
-    if (Math.abs(theta) > Math.PI * 1.25) theta -= 2 * Math.PI * Math.sign(theta);
+    if (prevT !== undefined) {
+      const un = theta + 2 * Math.PI * Math.round((prevT - theta) / (2 * Math.PI));
+      if (Math.abs(un) < Math.PI * 1.15) theta = un;
+    }
+    if (!commit) return theta;
     this.prevTheta[side] = theta;
     const L = WRIST_LIMITS;
-    const tBone = softLimit(theta, L.forearmTwist * DEG, L.forearmTwist * DEG);
+    let tBone = softLimit(theta, L.forearmTwist * DEG, L.forearmTwist * DEG);
+    this.prevTB = this.prevTB || {};
+    if (this.dt && this.prevTB[side] !== undefined) {
+      tBone = this.prevTB[side] + clampAbs(tBone - this.prevTB[side], 360 * DEG * this.dt);
+    }
+    this.prevTB[side] = tBone;
     const tRes = clampAbs(theta - tBone, L.wristTwist * DEG);
     const yAx = V(0, 1, 0);
     const n = arm.palmLocal;
@@ -244,14 +300,23 @@ export class Signer {
     arm.twist.quaternion.multiply(qBone);
     arm.twist.updateMatrixWorld(true);
     arm.hand.quaternion.copy(qBone.clone().invert().multiply(swingC).multiply(qBone).multiply(qRes).multiply(restHand));
+    this.prevHandQ = this.prevHandQ || {};
+    const ph = this.prevHandQ[side];
+    if (this.dt && ph) {  // la muñeca gira como máximo ~540°/s
+      const ang = ph.angleTo(arm.hand.quaternion);
+      const maxA = 540 * DEG * this.dt;
+      if (ang > maxA) arm.hand.quaternion.copy(ph.clone().slerp(arm.hand.quaternion, maxA / ang));
+    }
+    this.prevHandQ[side] = arm.hand.quaternion.clone();
     arm.hand.updateMatrixWorld(true);
+    return theta;
   }
 
   // Corrige la posición de la muñeca para que palma y yemas no atraviesen el cuerpo.
   avoidBody(side, pose) {
     const arm = this.arms[side];
     for (let k = 0; k < 2; k++) {
-      for (const off of [arm.palmOffset, arm.tipOffset]) {
+      for (const off of [arm.palmOffset, arm.tipOffset, ...arm.extraOffsets]) {
         const pt = pose.pos.clone().add(off.clone().applyQuaternion(pose.rot));
         pose.pos.add(pushOut(pt, off === arm.palmOffset ? HAND_MARGIN : 0.008));
       }
@@ -276,7 +341,9 @@ export class Signer {
       this.smoothBones = Object.keys(this.bones).filter(n => /_(R|L)$/.test(n));
     }
     const prev = this.prevQ;
+    this.dt = Math.min(dt, 0.1);
     this.apply(poses);
+    this.dt = 0;
     if (prev) {
       const a = 1 - Math.exp(-dt / tau);
       for (const n of this.smoothBones) this.bones[n].quaternion.copy(prev[n].slerp(this.bones[n].quaternion, a));
@@ -287,7 +354,7 @@ export class Signer {
   apply(poses) {
     for (const side of ['R', 'L']) {
       const p = poses[side];
-      this.solveArm(side, p.pos, p.rot);
+      this.solveArmOrganic(side, p.pos, p.rot);
       this.applyFingers(side, p.shape, p.shapeB, p.shapeT || 0);
     }
   }
@@ -358,6 +425,11 @@ export function sampleTimeline(signer, tl, time) {
     const u = i < keys.length ? THREE.MathUtils.clamp((time - prev.t) / span, 0, 1) : 1;
     const e = ease(u);
     const pos = prev.p.pos.clone().lerp(next.p.pos, e);
+    // Trayectoria en arco (hacia el frente y ligeramente arriba), como el movimiento humano real.
+    if (next !== prev && !next.mov) {
+      const dist = prev.p.pos.distanceTo(next.p.pos);
+      pos.add(V(0, 0.25, 1).normalize().multiplyScalar(Math.sin(Math.PI * e) * Math.min(0.06, 0.22 * dist)));
+    }
     if (next.mov && next !== prev) pos.add(movementOffset(next.mov, u, side));
     const rot = prev.p.rot.clone().slerp(next.p.rot, e);
     out[side] = { pos, rot, shape: prev.p.shape, shapeB: next.p.shape, shapeT: Math.min(1, e * 1.4) };

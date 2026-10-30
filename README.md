@@ -160,7 +160,10 @@ brazos y manos rigueados que interpreta texto en español como Lengua de Señas 
   cuello y cabeza del rig se colocan en las articulaciones de MakeHuman; brazos y manos se reposan de
   la pose A a la pose T del rig (cada hueso se alinea en posición, dirección y longitud). Los pesos
   de calor se calculan en la pose A, con los brazos separados del torso. El top y el pantalón son
-  copias suavizadas de la piel, con sus mismos pesos. Unas 123 k caras, GLB de ~6.5 MB.
+  copias suavizadas de la piel, con sus mismos pesos: suéter de manga larga y cuello redondo (holgado
+  en el pecho) y pantalón; la piel cubierta se elimina. El antebrazo reparte sus pesos de forma
+  gradual entre `lowerarm` y `lowerarm_twist` para que la pronación no "estrangule" la malla.
+  Ojos cafés y cabello en ~95 mechones finos. Unas 147 k caras, GLB de ~9.3 MB.
   `--base procedural` conserva la malla anterior hecha por script (voxel remesh + QuadriFlow).
 - **Pesos sin deformaciones:** bone heat + suavizado laplaciano sobre aristas, máx. 4 influencias por
   vértice y normalizados; la blusa copia los pesos de la piel y la piel cubierta se elimina para
@@ -171,6 +174,10 @@ brazos y manos rigueados que interpreta texto en español como Lengua de Señas 
 - **Muñecas naturales:** la pronación/supinación se descompone (swing-twist) y va al hueso de torsión
   del antebrazo; la mano sólo conserva flexión/desviación dentro de `WRIST_LIMITS` (75°/28°, giro
   residual 12°), así no gira de forma imposible.
+- **Brazo orgánico:** en cada fotograma se busca el giro del codo alrededor del eje hombro-muñeca
+  que menos torsión exige al antebrazo (`Signer.solveArmOrganic`); codo, torsión, muñeca y posición
+  tienen velocidad máxima, y las transiciones siguen un arco. `window.avatarProbe(texto)` mide el
+  giro por fotograma: en todo el léxico el máximo bajó de ~160° a ~22° por fotograma (60 fps).
 - **Sin interpenetraciones:** palma y yemas se empujan fuera de volúmenes de cabeza, cuello, pecho y
   abdomen (`Signer.avoidBody`) y las dos manos mantienen una separación mínima.
 - **Aspecto:** materiales físicos (piel con *sheen*, cabello metálico con clearcoat, ojos húmedos) e
