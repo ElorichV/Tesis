@@ -22,6 +22,12 @@ const DEFAULTS = {
   /** Silencio o manos abajo antes del envío automático (igual a $auto-send-ms en Sass). */
   AUTO_SEND_DELAY_MS: 1400,
 
+  /** Intervalo de envío de cuadros JPEG al reconocimiento en vivo. */
+  FRAME_INTERVAL_MS: 100,
+
+  /** Ancho de captura JPEG enviado al reconocimiento en vivo. */
+  CAPTURE_WIDTH: 640,
+
   /** Tiempos de la simulación. */
   DEMO: {
     CAMERA_PERMISSION_MS: 1000,

@@ -2,6 +2,7 @@
  * Cámara del alumno (getUserMedia).
  * Solo se usa fuera del modo demostración.
  */
+import { CONFIG } from '../config.js';
 
 let stream = null;
 let frameTimer = null;
@@ -51,8 +52,8 @@ export function streamFrames(video, onFrame, intervalMs = 200) {
   clearInterval(frameTimer);
   frameTimer = setInterval(() => {
     if (!stream || video.readyState < 2) return;
-    canvas.width = 320;
-    canvas.height = Math.round((video.videoHeight / video.videoWidth) * 320) || 240;
+    canvas.width = CONFIG.CAPTURE_WIDTH;
+    canvas.height = Math.round((video.videoHeight / video.videoWidth) * CONFIG.CAPTURE_WIDTH) || 240;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     canvas.toBlob((blob) => blob && onFrame(blob), 'image/jpeg', 0.7);
   }, intervalMs);

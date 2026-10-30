@@ -210,3 +210,21 @@ Las entradas sin `keyframes` se animan a partir de `descripcion_movimiento`.
 coincide; conviene recapturar el alfabeto LSM con `python -m app collect` y reentrenar. Las 80 señas del
 léxico son descripciones adaptadas (`revisado_por_interprete: false`) y deben validarse con
 intérpretes de LSM. No hay expresión facial (componente no manual).
+
+## Aplicación web unificada (`python -m app web`)
+
+Desde la raíz del repositorio, inicia juntos Aula Accesible, el avatar LSM y el reconocimiento en vivo:
+
+```powershell
+.\.venv\Scripts\python.exe -m app web
+# abrir http://127.0.0.1:8000
+```
+
+- **Maestro → alumno:** escribe o dicta un mensaje; el backend genera la secuencia de señas y el avatar 3D la reproduce en el escenario.
+- **Alumno → maestro:** activa la cámara y señas; el reconocimiento muestra letras parciales y envía el texto al bajar las manos durante 1.5 segundos, o al usar el gesto configurado para hablar.
+- `--no-voice` desactiva la lectura de voz del texto reconocido; `--alphabet LSM` selecciona el alfabeto y `--lang es|en` configura el idioma.
+- La cámara del navegador solo funciona en `localhost` o HTTPS. Los cuadros JPEG se procesan localmente en el servidor y no se guardan.
+
+El puerto por defecto es `8000` y puede cambiarse con `--port`; el host predeterminado es `127.0.0.1` (`--host` permite cambiarlo). El tiempo de manos abajo también se configura en `web.hands_down_seconds` de `config.yaml`.
+
+El servidor unificado sirve el frontend en `/`, el visor compartido en `/avatar/`, el endpoint de salud `/salud`, la traducción de texto en `POST /traducir-texto` y el reconocimiento WebSocket en `/reconocer`. La respuesta de traducción incluye `secuencia` con las señas para el avatar. Abrir `frontend/` con `python -m http.server` conserva el modo demostración sin backend.

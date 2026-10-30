@@ -13,7 +13,6 @@ const url = (path) => `${CONFIG.API_URL.replace(/\/$/, '')}${path}`;
  * @returns {Promise<boolean>}
  */
 export async function checkHealth() {
-  if (!CONFIG.API_URL) return false;
   try {
     const res = await fetch(url('/salud'), { method: 'GET' });
     return res.ok;
@@ -51,10 +50,10 @@ export async function translateText(text, { signal } = {}) {
  *   { "tipo": "manos",        "detectadas": true }
  *   { "tipo": "parcial",      "texto": "¿Qué es la…" }
  *   { "tipo": "final",        "texto": "¿Qué es la fotosíntesis?" }
- *   { "tipo": "no_reconocido" }
+ *   { "tipo": "no_reconocido", "motivo": "sin_modelo" }
  *   { "tipo": "calidad",      "encuadre": true, "luz": false }
  *
- * @param {(evt: {type: string, text?: string, framing?: boolean, light?: boolean}) => void} onEvent
+ * @param {(evt: {type: string, text?: string, reason?: string, framing?: boolean, light?: boolean}) => void} onEvent
  * @param {() => void} onDisconnect
  */
 export function connectRecognition(onEvent, onDisconnect) {
@@ -68,7 +67,7 @@ export function connectRecognition(onEvent, onDisconnect) {
       manos: () => msg.detectadas && onEvent({ type: 'hands' }),
       parcial: () => onEvent({ type: 'partial', text: msg.texto }),
       final: () => onEvent({ type: 'final', text: msg.texto }),
-      no_reconocido: () => onEvent({ type: 'unrecognized' }),
+      no_reconocido: () => onEvent({ type: 'unrecognized', reason: msg.motivo }),
       calidad: () => onEvent({ type: 'quality', framing: msg.encuadre, light: msg.luz }),
     };
     map[msg.tipo]?.();

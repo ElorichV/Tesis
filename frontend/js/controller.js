@@ -8,15 +8,16 @@ import { getLastTeacherMessage, isListening, isSigning } from './selectors.js';
 import { nowHHMM, uid, copyText } from './utils/dom.js';
 import * as api from './services/api.js';
 import * as camera from './services/camera.js';
+import * as avatar from './services/avatar.js';
 import * as speech from './services/speech.js';
 import * as demo from './services/demo.js';
 import { EXAMPLE_CONVERSATION, SIGN_SCRIPT, DICTATION_SCRIPT, SIMPLE_SPANISH } from './data/demo-data.js';
 
 /**
  * @param {ReturnType<import('./state.js').createStore>} store
- * @param {{ stageVideo: HTMLVideoElement, cameraVideo: HTMLVideoElement }} media
+ * @param {{ stageVideo: HTMLVideoElement, cameraVideo: HTMLVideoElement, stageAvatar: HTMLElement }} media
  */
-export function createController(store, { stageVideo, cameraVideo }) {
+export function createController(store, { stageVideo, cameraVideo, stageAvatar }) {
   const { get, set } = store;
   const timers = { toast: 0, signEnd: 0, micEnd: 0 };
   let cancelSigns = null;
@@ -25,6 +26,8 @@ export function createController(store, { stageVideo, cameraVideo }) {
   let recognition = null;
   let signIndex = 0;
   let dictationIndex = 0;
+
+  if (!CONFIG.DEMO_MODE && stageAvatar) avatar.init(stageAvatar);
 
   // ------------------------------------------------------------------------
   // Utilidades internas
@@ -125,7 +128,7 @@ export function createController(store, { stageVideo, cameraVideo }) {
         break;
       case 'unrecognized':
         set({ signPhase: 'ending', interim: '' });
-        scheduleSignCommit(null);
+        scheduleSignCommit(null, evt.reason);
         break;
       case 'quality':
         set({ quality: { framing: evt.framing ?? s.quality.framing, light: evt.light ?? s.quality.light } });
@@ -136,7 +139,7 @@ export function createController(store, { stageVideo, cameraVideo }) {
   }
 
   /** Envío automático tras bajar las manos (se puede cancelar con «Cancelar»). */
-  function scheduleSignCommit(text) {
+  function scheduleSignCommit(text, reason) {
     clearTimeout(timers.signEnd);
     timers.signEnd = setTimeout(() => {
       set({ signPhase: null, interim: '' });
@@ -144,8 +147,11 @@ export function createController(store, { stageVideo, cameraVideo }) {
         addMessage({ author: 'alumno', via: 'lsm', text });
         announce(`El alumno dijo: ${text}`);
       } else {
-        addMessage({ author: 'sistema', text: 'No reconocimos las señas. Pide que repita más despacio.' });
-        announce('No se reconocieron las señas.');
+        const message = reason === 'sin_modelo'
+          ? 'No hay un modelo de señas entrenado. Ejecuta «python -m app collect» y luego «python -m app train».'
+          : 'No reconocimos ninguna letra. Sostén cada letra quieta un momento, con la mano dentro del cuadro.';
+        addMessage({ author: 'sistema', text: message });
+        announce(message);
       }
     }, CONFIG.AUTO_SEND_DELAY_MS);
   }
@@ -166,7 +172,7 @@ export function createController(store, { stageVideo, cameraVideo }) {
     if (!CONFIG.RECOGNITION_WS_URL) return;
     recognition?.close();
     recognition = api.connectRecognition(handleRecognition, () => set({ online: false }));
-    camera.streamFrames(cameraVideo, (frame) => recognition?.send(frame));
+    camera.streamFrames(cameraVideo, (frame) => recognition?.send(frame), CONFIG.FRAME_INTERVAL_MS);
   }
 
   // ------------------------------------------------------------------------
@@ -208,10 +214,14 @@ export function createController(store, { stageVideo, cameraVideo }) {
         updateMessage(id, { simple: SIMPLE_SPANISH[text], animation: res.animation });
       } else {
         const res = await api.translateText(text);
+        const secuencia = Array.isArray(res.secuencia) ? res.secuencia : [];
+        avatar.setSpeed(get().speed);
+        const avatarAvailable = secuencia.length ? await avatar.play(secuencia) : false;
         updateMessage(id, {
           simple: res.texto_sencillo || undefined,
           animationUrl: res.animacion_url || undefined,
-          animation: res.animacion_url ? 'ready' : 'unavailable',
+          secuencia: avatarAvailable ? secuencia : undefined,
+          animation: avatarAvailable || res.animacion_url ? 'ready' : 'unavailable',
         });
       }
       announce('Mensaje listo para el alumno.');
@@ -242,18 +252,46 @@ export function createController(store, { stageVideo, cameraVideo }) {
     announce('Micrófono activo. Habla con frases cortas.');
 
     const handlers = {
-      onPartial: (text) => {
+      onPartial: (text, isFinal) => {
+        set({ draft: text });
         clearTimeout(timers.micEnd);
-        set({ draft: text, micPhase: 'speaking' });
+        if (isFinal) {
+          set({ micPhase: 'ending' });
+          timers.micEnd = setTimeout(finishDictation, CONFIG.AUTO_SEND_DELAY_MS);
+        } else {
+          set({ micPhase: 'speaking' });
+        }
       },
       onSilence: () => {
         set({ micPhase: 'ending' });
+        clearTimeout(timers.micEnd);
         timers.micEnd = setTimeout(finishDictation, CONFIG.AUTO_SEND_DELAY_MS);
       },
+      onEnd: () => {
+        if (isListening(get())) {
+          clearTimeout(timers.micEnd);
+          finishDictation();
+        }
+      },
       onError: (reason) => {
+        if (reason === 'aborted') return;
         stopDictation();
-        set({ mic: reason === 'denied' ? 'denied' : 'off', micPhase: null });
-        announce(reason === 'denied' ? 'Sin permiso para el micrófono.' : 'Se interrumpió el dictado.');
+        if (reason === 'denied') {
+          set({ mic: 'denied', micPhase: null });
+          showToast('Permite el micrófono en el candado de la barra de direcciones.', 'warn');
+          announce('Sin permiso para el micrófono.');
+        } else {
+          set({ mic: 'off', micPhase: null });
+          const messages = {
+            nospeech: 'No se escuchó nada. Intenta de nuevo.',
+            network: 'El dictado necesita conexión a internet (Chrome usa el servicio de Google). Escribe el mensaje o revisa tu conexión.',
+            nomic: 'No se encontró un micrófono. Revisa que esté conectado y permitido en Windows.',
+            busy: 'Otra aplicación está usando el micrófono. Ciérrala e intenta de nuevo.',
+            insecure: 'El navegador solo permite el micrófono en http://127.0.0.1:8000 o https.',
+          };
+          if (messages[reason]) showToast(messages[reason], 'warn');
+          else announce('Se interrumpió el dictado.');
+        }
       },
     };
 
@@ -312,25 +350,39 @@ export function createController(store, { stageVideo, cameraVideo }) {
   function setSpeed(value) {
     set({ speed: value });
     if (stageVideo) stageVideo.playbackRate = Number(value);
+    avatar.setSpeed(value);
     announce(`Velocidad ${value}×`);
   }
 
   function animationReady() {
     const last = getLastTeacherMessage(get());
-    return Boolean(last?.animation === 'ready' && last.animationUrl);
+    return Boolean(
+      last?.animation === 'ready'
+      && (last.secuencia?.length || last.animationUrl),
+    );
   }
 
   function repeatAnimation() {
     if (animationReady()) {
-      stageVideo.currentTime = 0;
-      stageVideo.play();
+      const last = getLastTeacherMessage(get());
+      if (last.secuencia?.length) avatar.replay();
+      else {
+        stageVideo.currentTime = 0;
+        stageVideo.play();
+      }
     } else {
       showToast('Repetir estará disponible cuando el servicio entregue la animación.');
     }
   }
 
   function expandAnimation() {
-    if (animationReady() && stageVideo.requestFullscreen) stageVideo.requestFullscreen();
+    if (!animationReady()) {
+      showToast('Ampliar estará disponible cuando el servicio entregue la animación.');
+      return;
+    }
+    const last = getLastTeacherMessage(get());
+    if (last.secuencia?.length && stageAvatar?.requestFullscreen) stageAvatar.requestFullscreen();
+    else if (stageVideo.requestFullscreen) stageVideo.requestFullscreen();
     else showToast('Ampliar estará disponible cuando el servicio entregue la animación.');
   }
 
@@ -368,6 +420,7 @@ export function createController(store, { stageVideo, cameraVideo }) {
   async function reconnect() {
     const ok = CONFIG.DEMO_MODE ? true : await api.checkHealth();
     set({ online: ok });
+    if (ok && get().camera === 'active') startRecognition();
     announce(ok ? 'Conexión recuperada.' : 'Seguimos sin conexión.');
   }
 
@@ -423,7 +476,7 @@ export function createController(store, { stageVideo, cameraVideo }) {
   // ------------------------------------------------------------------------
 
   async function init() {
-    if (!CONFIG.DEMO_MODE && CONFIG.API_URL) {
+    if (!CONFIG.DEMO_MODE) {
       set({ online: await api.checkHealth() });
     }
   }
