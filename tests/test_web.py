@@ -180,6 +180,34 @@ def test_recognition_session_finalizes_after_hands_down() -> None:
     assert speech.calls == [("ho", "es")]
 
 
+def test_recognition_session_reports_unrecognized_after_empty_hands_down() -> None:
+    now = [0.0]
+    events = []
+    session = RecognitionSession(
+        {"camera": {"mirror_display": False}, "web": {"hands_down_seconds": 1.5}},
+        lang="es",
+        emit=events.append,
+        tracker=FakeTracker(
+            [perception(True), perception(False), perception(False), perception(False)]
+        ),
+        predictor=FakePredictor([None, None, None, None]),
+        text_buffer=StableTextBuffer(
+            stability_frames=1,
+            release_frames=1,
+            confidence_threshold=0,
+        ),
+        gemini_proc=FakeGemini(),
+        speech_out=FakeSpeech(),
+        clock=lambda: now[0],
+    )
+
+    for timestamp in (0.0, 0.1, 1.6, 3.2):
+        now[0] = timestamp
+        session.process_jpeg(jpeg_frame())
+
+    assert events.count({"tipo": "no_reconocido"}) == 1
+
+
 def test_recognition_session_speak_with_empty_buffer() -> None:
     now = [0.0]
     events = []
@@ -206,3 +234,33 @@ def test_recognition_session_speak_with_empty_buffer() -> None:
     session.process_jpeg(jpeg_frame())
     session.process_jpeg(jpeg_frame())
     assert {"tipo": "no_reconocido"} in events
+
+
+def test_recognition_session_ignores_speak_without_hands_seen() -> None:
+    now = [0.0]
+    events = []
+    brow_up = perception(False)
+    brow_up.active_gestures = {"brow_up"}
+    session = RecognitionSession(
+        {"camera": {"mirror_display": False}},
+        lang="es",
+        emit=events.append,
+        tracker=FakeTracker([brow_up, brow_up]),
+        predictor=FakePredictor([None, None]),
+        text_buffer=StableTextBuffer(
+            stability_frames=1,
+            release_frames=1,
+            confidence_threshold=0,
+            control_gesture_hold_frames=1,
+            gestures_config={"speak": "brow_up", "space": "none", "backspace": "none"},
+        ),
+        gemini_proc=FakeGemini(),
+        speech_out=FakeSpeech(),
+        clock=lambda: now[0],
+    )
+
+    session.process_jpeg(jpeg_frame())
+    now[0] = 0.1
+    session.process_jpeg(jpeg_frame())
+
+    assert not any(event["tipo"] in {"no_reconocido", "final"} for event in events)

@@ -174,6 +174,7 @@ class RecognitionSession:
         self.started_at = clock()
         self.last_no_hand_at: float | None = None
         self.hands_detected = False
+        self.hands_seen_since_final = False
         self.last_buffer_text = self.text_buffer.text
         self.last_quality: tuple[bool, bool] | None = None
         self.last_quality_at: float | None = None
@@ -213,6 +214,8 @@ class RecognitionSession:
         has_hands = bool(perception.hands)
         if has_hands and not self.hands_detected:
             self._emit("manos", detectadas=True)
+        if has_hands:
+            self.hands_seen_since_final = True
         self.hands_detected = has_hands
         if has_hands:
             self.last_no_hand_at = None
@@ -235,11 +238,12 @@ class RecognitionSession:
             self.last_quality = quality
             self.last_quality_at = now
 
-        if buffer_state.triggered_action == "speak":
+        if buffer_state.triggered_action == "speak" and (
+            self.text_buffer.text.strip() or self.hands_seen_since_final
+        ):
             self._finalize()
         elif (
             self.last_no_hand_at is not None
-            and self.text_buffer.text.strip()
             and now - self.last_no_hand_at >= self.hands_down_seconds
         ):
             self._finalize()
@@ -247,7 +251,10 @@ class RecognitionSession:
     def _finalize(self) -> None:
         raw = self.text_buffer.text.strip()
         if not raw:
-            self._emit("no_reconocido")
+            if self.hands_seen_since_final:
+                self._emit("no_reconocido")
+            self.hands_seen_since_final = False
+            self.last_no_hand_at = None
             return
         cleaned = self.gemini_proc.clean_text(raw, lang=self.lang)
         self._emit("final", texto=cleaned)
@@ -256,6 +263,7 @@ class RecognitionSession:
         self.text_buffer.clear()
         self.last_buffer_text = self.text_buffer.text
         self.last_no_hand_at = None
+        self.hands_seen_since_final = False
 
     def close(self) -> None:
         self.tracker.close()
