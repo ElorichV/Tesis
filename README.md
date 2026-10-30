@@ -96,7 +96,7 @@ recognition/  Recolección a CSV, bootstrap público, entrenamiento e inferencia
 text/         Buffer de estabilidad, anti-repetición, gestos de control, Gemini opcional
 speech/       Adaptador SpeechOutput sobre ./voice-translate
 avatar/       Rig de Blender, cinemática, léxico LSM y visor Three.js
-frontend/     Aula Accesible: HTML + Sass (BEM) + ES modules, sin frameworks
+frontend/     Voz abierta: HTML + Sass (BEM) + ES modules, sin frameworks
 tests/        Suite pytest determinista (no requiere cámara ni GPU)
 ```
 

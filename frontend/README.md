@@ -1,4 +1,4 @@
-# Aula Accesible · Frontend
+# Voz abierta · Frontend
 
 Traductor en vivo en una sola pantalla compartida entre un **alumno sordo que usa Lengua de Señas Mexicana (LSM)** y su **maestro**.
 

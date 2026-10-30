@@ -1,5 +1,5 @@
 /**
- * Aula Accesible · punto de entrada del traductor en vivo.
+ * Voz abierta · punto de entrada del traductor en vivo.
  */
 import { $ } from './utils/dom.js';
 import { createStore, initialState } from './state.js';

@@ -585,7 +585,7 @@ def serve(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Aplicación web unificada de Aula Accesible.")
+    parser = argparse.ArgumentParser(description="Aplicación web unificada de Voz abierta.")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=None)
     parser.add_argument("--config", default="config.yaml")

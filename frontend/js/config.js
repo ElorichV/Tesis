@@ -1,5 +1,5 @@
 /**
- * Configuración de Aula Accesible.
+ * Configuración de Voz abierta.
  *
  * Para cambiar valores sin tocar este archivo, define antes de cargar main.js:
  *   <script>window.AULA_CONFIG = { DEMO_MODE: false, API_URL: 'http://localhost:8000' };</script>
