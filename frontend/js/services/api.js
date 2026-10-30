@@ -13,7 +13,6 @@ const url = (path) => `${CONFIG.API_URL.replace(/\/$/, '')}${path}`;
  * @returns {Promise<boolean>}
  */
 export async function checkHealth() {
-  if (!CONFIG.API_URL) return false;
   try {
     const res = await fetch(url('/salud'), { method: 'GET' });
     return res.ok;

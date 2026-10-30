@@ -29,6 +29,7 @@ export function initAlumno(root, store, controller) {
     stageViews: $$('[data-stage-view]', root),
     stageLiveText: $('[data-stage-live-text]', root),
     stageVideo: $('[data-stage-video]', root),
+    stageAvatar: $('[data-stage-avatar]', root),
 
     camera: $('[data-camera]', root),
     cameraViews: $$('[data-camera-view]', root),
@@ -84,10 +85,12 @@ export function initAlumno(root, store, controller) {
   function renderStage(s) {
     const view = getStageView(s);
     const last = getLastTeacherMessage(s);
-    const hasVideo = view === 'ready' && Boolean(last?.animationUrl);
+    const hasAvatar = view === 'ready' && Boolean(last?.secuencia?.length);
+    const hasVideo = view === 'ready' && !hasAvatar && Boolean(last?.animationUrl);
 
-    showView(el.stageViews, 'data-stage-view', hasVideo ? '' : view === 'ready' ? 'unavailable' : view);
+    showView(el.stageViews, 'data-stage-view', hasAvatar || hasVideo ? '' : view === 'ready' ? 'unavailable' : view);
     el.stageVideo.hidden = !hasVideo;
+    el.stageAvatar.hidden = !hasAvatar;
     if (hasVideo && el.stageVideo.getAttribute('src') !== last.animationUrl) {
       el.stageVideo.src = last.animationUrl;
       el.stageVideo.playbackRate = Number(s.speed);

@@ -8,15 +8,16 @@ import { getLastTeacherMessage, isListening, isSigning } from './selectors.js';
 import { nowHHMM, uid, copyText } from './utils/dom.js';
 import * as api from './services/api.js';
 import * as camera from './services/camera.js';
+import * as avatar from './services/avatar.js';
 import * as speech from './services/speech.js';
 import * as demo from './services/demo.js';
 import { EXAMPLE_CONVERSATION, SIGN_SCRIPT, DICTATION_SCRIPT, SIMPLE_SPANISH } from './data/demo-data.js';
 
 /**
  * @param {ReturnType<import('./state.js').createStore>} store
- * @param {{ stageVideo: HTMLVideoElement, cameraVideo: HTMLVideoElement }} media
+ * @param {{ stageVideo: HTMLVideoElement, cameraVideo: HTMLVideoElement, stageAvatar: HTMLElement }} media
  */
-export function createController(store, { stageVideo, cameraVideo }) {
+export function createController(store, { stageVideo, cameraVideo, stageAvatar }) {
   const { get, set } = store;
   const timers = { toast: 0, signEnd: 0, micEnd: 0 };
   let cancelSigns = null;
@@ -25,6 +26,8 @@ export function createController(store, { stageVideo, cameraVideo }) {
   let recognition = null;
   let signIndex = 0;
   let dictationIndex = 0;
+
+  if (!CONFIG.DEMO_MODE && stageAvatar) avatar.init(stageAvatar);
 
   // ------------------------------------------------------------------------
   // Utilidades internas
@@ -166,7 +169,7 @@ export function createController(store, { stageVideo, cameraVideo }) {
     if (!CONFIG.RECOGNITION_WS_URL) return;
     recognition?.close();
     recognition = api.connectRecognition(handleRecognition, () => set({ online: false }));
-    camera.streamFrames(cameraVideo, (frame) => recognition?.send(frame));
+    camera.streamFrames(cameraVideo, (frame) => recognition?.send(frame), CONFIG.FRAME_INTERVAL_MS);
   }
 
   // ------------------------------------------------------------------------
@@ -208,10 +211,14 @@ export function createController(store, { stageVideo, cameraVideo }) {
         updateMessage(id, { simple: SIMPLE_SPANISH[text], animation: res.animation });
       } else {
         const res = await api.translateText(text);
+        const secuencia = Array.isArray(res.secuencia) ? res.secuencia : [];
+        avatar.setSpeed(get().speed);
+        const avatarAvailable = secuencia.length ? await avatar.play(secuencia) : false;
         updateMessage(id, {
           simple: res.texto_sencillo || undefined,
           animationUrl: res.animacion_url || undefined,
-          animation: res.animacion_url ? 'ready' : 'unavailable',
+          secuencia,
+          animation: avatarAvailable || res.animacion_url ? 'ready' : 'unavailable',
         });
       }
       announce('Mensaje listo para el alumno.');
@@ -312,25 +319,39 @@ export function createController(store, { stageVideo, cameraVideo }) {
   function setSpeed(value) {
     set({ speed: value });
     if (stageVideo) stageVideo.playbackRate = Number(value);
+    avatar.setSpeed(value);
     announce(`Velocidad ${value}×`);
   }
 
   function animationReady() {
     const last = getLastTeacherMessage(get());
-    return Boolean(last?.animation === 'ready' && last.animationUrl);
+    return Boolean(
+      last?.animation === 'ready'
+      && (last.secuencia?.length || last.animationUrl),
+    );
   }
 
   function repeatAnimation() {
     if (animationReady()) {
-      stageVideo.currentTime = 0;
-      stageVideo.play();
+      const last = getLastTeacherMessage(get());
+      if (last.secuencia?.length) avatar.replay();
+      else {
+        stageVideo.currentTime = 0;
+        stageVideo.play();
+      }
     } else {
       showToast('Repetir estará disponible cuando el servicio entregue la animación.');
     }
   }
 
   function expandAnimation() {
-    if (animationReady() && stageVideo.requestFullscreen) stageVideo.requestFullscreen();
+    if (!animationReady()) {
+      showToast('Ampliar estará disponible cuando el servicio entregue la animación.');
+      return;
+    }
+    const last = getLastTeacherMessage(get());
+    if (last.secuencia?.length && stageAvatar?.requestFullscreen) stageAvatar.requestFullscreen();
+    else if (stageVideo.requestFullscreen) stageVideo.requestFullscreen();
     else showToast('Ampliar estará disponible cuando el servicio entregue la animación.');
   }
 
@@ -368,6 +389,7 @@ export function createController(store, { stageVideo, cameraVideo }) {
   async function reconnect() {
     const ok = CONFIG.DEMO_MODE ? true : await api.checkHealth();
     set({ online: ok });
+    if (ok && get().camera === 'active') startRecognition();
     announce(ok ? 'Conexión recuperada.' : 'Seguimos sin conexión.');
   }
 
@@ -423,7 +445,7 @@ export function createController(store, { stageVideo, cameraVideo }) {
   // ------------------------------------------------------------------------
 
   async function init() {
-    if (!CONFIG.DEMO_MODE && CONFIG.API_URL) {
+    if (!CONFIG.DEMO_MODE) {
       set({ online: await api.checkHealth() });
     }
   }

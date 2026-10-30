@@ -124,3 +124,6 @@ speech:
   tts_model_es: "tts_models/es/mai/tacotron2-DDC"
   tts_model_en: "tts_models/en/ljspeech/tacotron2-DDC_ph"
 
+web:
+  port: 8000
+  hands_down_seconds: 1.5

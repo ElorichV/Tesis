@@ -58,6 +58,59 @@ def _create_camera(cfg: dict[str, Any], camera_override: int | None = None) -> C
     )
 
 
+def _create_run_components(
+    cfg: dict[str, Any],
+    target_lang: str,
+    async_playback: bool = True,
+    *,
+    warn_untrained: bool = True,
+) -> tuple[SignPredictor, StableTextBuffer, GeminiTextPostProcessor, SpeechOutput]:
+    """Construye los componentes compartidos por los modos `run` y `web`."""
+    rec_cfg = cfg.get("recognition", {})
+    feat_cfg = cfg.get("features", {})
+    txt_cfg = cfg.get("text", {})
+    gem_cfg = cfg.get("gemini", {})
+    sp_cfg = cfg.get("speech", {})
+
+    predictor = SignPredictor(
+        static_model_path=rec_cfg.get("model_path", "models/sign_classifier.joblib"),
+        dynamic_model_path=rec_cfg.get(
+            "dynamic_model_path", "models/sign_dynamic_classifier.joblib"
+        ),
+        canonical_hand=feat_cfg.get("canonical_hand", "Right"),
+        dynamic_window_frames=int(feat_cfg.get("dynamic_window_frames", 25)),
+        dynamic_min_motion=float(feat_cfg.get("dynamic_min_motion", 0.08)),
+    )
+    if warn_untrained and not predictor.is_ready:
+        print(
+            "[AVISO] Aún no existe un modelo entrenado en 'models/'. "
+            "El sistema mostrará los landmarks en vivo, pero para reconocer letras "
+            "ejecuta primero: `python -m app collect` y `python -m app train`."
+        )
+
+    text_buffer = StableTextBuffer(
+        stability_frames=int(txt_cfg.get("stability_frames", 12)),
+        confidence_threshold=float(txt_cfg.get("confidence_threshold", 0.70)),
+        release_frames=int(txt_cfg.get("release_frames", 4)),
+        control_gesture_hold_frames=int(txt_cfg.get("control_gesture_hold_frames", 20)),
+        gestures_config=txt_cfg.get("gestures"),
+    )
+    gemini_proc = GeminiTextPostProcessor(
+        enabled=bool(gem_cfg.get("enabled", True)),
+        default_model=str(gem_cfg.get("model", "gemini-2.5-flash")),
+        timeout_seconds=float(gem_cfg.get("timeout_seconds", 8.0)),
+    )
+    speech_out = SpeechOutput(
+        voice_translate_dir=sp_cfg.get("voice_translate_dir", "./voice-translate"),
+        default_lang=target_lang,
+        output_wav=sp_cfg.get("output_wav", "output.wav"),
+        tts_model_es=sp_cfg.get("tts_model_es"),
+        tts_model_en=sp_cfg.get("tts_model_en"),
+        async_playback=async_playback,
+    )
+    return predictor, text_buffer, gemini_proc, speech_out
+
+
 def cmd_collect(args: argparse.Namespace) -> int:
     """Modo de captura interactiva de landmarks (estáticos y dinámicos) con la webcam."""
     cfg = load_config(args.config)
@@ -252,51 +305,11 @@ def cmd_run(args: argparse.Namespace) -> int:
     spec = get_alphabet_spec(cfg, args.alphabet)
     _print_alphabet_summary(spec)
 
-    rec_cfg = cfg.get("recognition", {})
-    feat_cfg = cfg.get("features", {})
-    txt_cfg = cfg.get("text", {})
-    gem_cfg = cfg.get("gemini", {})
     sp_cfg = cfg.get("speech", {})
 
     target_lang = args.lang or sp_cfg.get("language", "es")
-
-    predictor = SignPredictor(
-        static_model_path=rec_cfg.get("model_path", "models/sign_classifier.joblib"),
-        dynamic_model_path=rec_cfg.get(
-            "dynamic_model_path", "models/sign_dynamic_classifier.joblib"
-        ),
-        canonical_hand=feat_cfg.get("canonical_hand", "Right"),
-        dynamic_window_frames=int(feat_cfg.get("dynamic_window_frames", 25)),
-        dynamic_min_motion=float(feat_cfg.get("dynamic_min_motion", 0.08)),
-    )
-    if not predictor.is_ready:
-        print(
-            "[AVISO] Aún no existe un modelo entrenado en 'models/'. "
-            "El sistema mostrará los landmarks en vivo, pero para reconocer letras "
-            "ejecuta primero: `python -m app collect` y `python -m app train`."
-        )
-
-    text_buffer = StableTextBuffer(
-        stability_frames=int(txt_cfg.get("stability_frames", 12)),
-        confidence_threshold=float(txt_cfg.get("confidence_threshold", 0.70)),
-        release_frames=int(txt_cfg.get("release_frames", 4)),
-        control_gesture_hold_frames=int(txt_cfg.get("control_gesture_hold_frames", 20)),
-        gestures_config=txt_cfg.get("gestures"),
-    )
-
-    gemini_proc = GeminiTextPostProcessor(
-        enabled=bool(gem_cfg.get("enabled", True)),
-        default_model=str(gem_cfg.get("model", "gemini-2.5-flash")),
-        timeout_seconds=float(gem_cfg.get("timeout_seconds", 8.0)),
-    )
-
-    speech_out = SpeechOutput(
-        voice_translate_dir=sp_cfg.get("voice_translate_dir", "./voice-translate"),
-        default_lang=target_lang,
-        output_wav=sp_cfg.get("output_wav", "output.wav"),
-        tts_model_es=sp_cfg.get("tts_model_es"),
-        tts_model_en=sp_cfg.get("tts_model_en"),
-        async_playback=not args.headless_benchmark,
+    predictor, text_buffer, gemini_proc, speech_out = _create_run_components(
+        cfg, target_lang, async_playback=not args.headless_benchmark
     )
 
     tracker = _create_tracker(cfg)
@@ -483,6 +496,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_avatar.add_argument("--port", type=int, default=8765)
     p_avatar.set_defaults(func=cmd_avatar)
 
+    p_web = subparsers.add_parser(
+        "web", help="Inicia la aplicación web unificada con avatar y reconocimiento en vivo."
+    )
+    p_web.add_argument("--host", default="127.0.0.1")
+    p_web.add_argument("--port", type=int, default=None)
+    p_web.add_argument("--no-voice", action="store_true", help="Desactiva la salida de voz.")
+    p_web.add_argument("--alphabet", type=str, default=None, help="Alfabeto (ASL o LSM).")
+    p_web.add_argument("--lang", type=str, default=None, help="Idioma de salida de voz (es o en).")
+    p_web.set_defaults(func=cmd_web)
+
     return parser
 
 
@@ -490,6 +513,20 @@ def cmd_avatar(args: argparse.Namespace) -> int:
     from avatar.server import serve
 
     serve(args.host, args.port)
+    return 0
+
+
+def cmd_web(args: argparse.Namespace) -> int:
+    from app.web import serve
+
+    serve(
+        host=args.host,
+        port=args.port,
+        config_path=args.config,
+        alphabet=args.alphabet,
+        lang=args.lang,
+        no_voice=args.no_voice,
+    )
     return 0
 
 
@@ -506,4 +543,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

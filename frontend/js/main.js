@@ -14,6 +14,7 @@ const store = createStore(initialState);
 const controller = createController(store, {
   stageVideo: $('[data-stage-video]'),
   cameraVideo: $('[data-camera-video]'),
+  stageAvatar: $('[data-stage-avatar]'),
 });
 
 initAlumno($('.panel--alumno'), store, controller);

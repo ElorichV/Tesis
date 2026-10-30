@@ -17,6 +17,7 @@
  * @property {string} time            HH:MM
  * @property {AnimationStatus} [animation]
  * @property {string} [animationUrl]  Video de la animación en LSM
+ * @property {object[]} [secuencia]   Glosas y fotogramas clave para el avatar 3D
  */
 
 export const initialState = Object.freeze({

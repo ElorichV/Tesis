@@ -23,6 +23,15 @@ python -m http.server 8000
 
 La cámara y el micrófono solo funcionan en `localhost` o con HTTPS.
 
+Para el modo real con API, reconocimiento WebSocket y avatar 3D, ejecuta desde la raíz del repositorio:
+
+```bash
+python -m app web
+# abrir http://127.0.0.1:8000
+```
+
+El servidor integrado establece `DEMO_MODE:false`, ofrece `POST /traducir-texto` y recibe cuadros JPEG binarios en `/reconocer`. La traducción incluye `secuencia` (glosa y fotogramas clave) para reproducir señas con el avatar; las respuestas también pueden incluir `animacion_url` para una animación de video.
+
 ### Compilar estilos
 
 El `css/main.css` ya viene compilado. Para recompilarlo después de editar el Sass:
@@ -135,6 +144,7 @@ Toda la configuración está en `js/config.js`. Puedes sobrescribirla sin tocar 
 | `RECOGNITION_WS_URL` | `''` | WebSocket del reconocimiento de LSM |
 | `MAX_MESSAGE_LENGTH` | `300` | Máximo de caracteres por mensaje del maestro |
 | `AUTO_SEND_DELAY_MS` | `1400` | Tiempo para cancelar antes de enviar señas o dictado |
+| `FRAME_INTERVAL_MS` | `100` | Intervalo de envío de cuadros JPEG al reconocimiento |
 
 **No pongas llaves de API en el frontend.** Las llamadas a modelos de IA se hacen desde el backend.
 
@@ -157,15 +167,17 @@ Convierte el texto del maestro a español sencillo y a una animación de señas.
 // Respuesta
 {
   "texto_sencillo": "Las plantas usan la luz para hacer azúcar.",
-  "animacion_url": "https://…/animacion.mp4"
+  "glosa": "PLANTA LUZ AZUCAR",
+  "secuencia": [{"tipo": "sena", "glosa": "PLANTA", "keyframes": []}],
+  "animacion_url": null
 }
 ```
 
-Si todavía no hay animación, `animacion_url` puede ser `null`. El alumno verá el texto sencillo y un aviso honesto de que la animación no está disponible.
+La respuesta contiene una `secuencia` de señas para el avatar. `animacion_url` puede ser `null`; cuando se envía una URL de video, el frontend conserva el reproductor de video.
 
 ### WebSocket de reconocimiento (`RECOGNITION_WS_URL`)
 
-El frontend envía cuadros de la cámara como JPEG (binario). El backend responde con mensajes JSON:
+El frontend envía cuadros de la cámara como JPEG (binario) por `/reconocer`. El backend responde con mensajes JSON:
 
 | `tipo` | Campos | Qué hace el frontend |
 |---|---|---|

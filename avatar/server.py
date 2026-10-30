@@ -25,6 +25,24 @@ WEB_DIR = Path(__file__).resolve().parent / "web"
 LOGGER = logging.getLogger(__name__)
 
 
+def translate_text(lexicon: Lexicon, text: str) -> dict:
+    return lexicon.translate(text[:500])
+
+
+def list_lexicon(lexicon: Lexicon) -> list[dict]:
+    return sorted(
+        (
+            {
+                "termino": entry["termino"],
+                "glosa": entry.get("glosa"),
+                "categoria": entry.get("categoria"),
+            }
+            for entry in lexicon.entries.values()
+        ),
+        key=lambda entry: entry["termino"],
+    )
+
+
 class AvatarHandler(SimpleHTTPRequestHandler):
     lexicon: Lexicon
 
@@ -43,10 +61,9 @@ class AvatarHandler(SimpleHTTPRequestHandler):
         url = urlparse(self.path)
         if url.path == "/api/translate":
             text = parse_qs(url.query).get("text", [""])[0][:500]
-            self._json(self.lexicon.translate(text))
+            self._json(translate_text(self.lexicon, text))
         elif url.path == "/api/lexicon":
-            self._json(sorted(({"termino": e["termino"], "glosa": e.get("glosa"), "categoria": e.get("categoria")}
-                               for e in self.lexicon.entries.values()), key=lambda e: e["termino"]))
+            self._json(list_lexicon(self.lexicon))
         else:
             super().do_GET()
 

@@ -10,6 +10,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;500&family=Atkinson+Hyperlegible+Next:wght@400;500;700&display=swap">
   <link rel="stylesheet" href="css/main.css">
+  <script type="importmap">
+    {"imports":{"three":"/avatar/vendor/three/three.module.js","three/addons/":"/avatar/vendor/three/addons/"}}
+  </script>
   <script type="module" src="js/main.js"></script>
 </head>
 <body class="page">
@@ -90,6 +93,7 @@
           <!-- Columna izquierda: animación + cámara (mismo ancho) -->
           <div class="alumno__media">
             <div class="stage" data-stage role="region" aria-label="Animación en LSM del mensaje del maestro">
+              <div class="stage__avatar" data-stage-avatar hidden></div>
               <video class="stage__video" data-stage-video playsinline hidden></video>
 
               <div class="stage__view" data-stage-view="idle">
